@@ -12,6 +12,9 @@ body {
   --border-color: #c7c7c7;
   --sidebar-background-color: #f2f2f2;
   --text-color-grey: #7c7c7c;
+  --border-radius: 7px;
+  --color-warning: #e10000;
+  --color-blue: #216ec4;
 }
 
 .content_wrapper {
@@ -152,14 +155,160 @@ dialog {
   left: 50%;
   translate: -50% -50%;
   border: none;
+  padding: 20px;
+  width: 600px;
 }
 
 dialog::backdrop {
   background-color: rgba(0, 0, 0, 0.632);
 }
 
-dialog > button {
+[data-close-modal] {
   background: none;
   border: none;
   color: var(--text-color-grey);
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.profile_title {
+  text-align: center;
+  margin-bottom: 20px;
+  font-weight: 200;
+}
+
+.profile_section {
+  border: 1px solid var(--border-color);
+  padding: 20px;
+  border-radius: var(--border-radius);
+}
+
+.profile_basic_info_row {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 20px;
+}
+
+.top_row_profile_picture {
+  width: 50%;
+}
+
+.profile_picture_wrapper {
+  margin: 0 auto;
+}
+
+.profile_picture {
+  width: 80px;
+  height: 80px;
+  background-color: lightgray;
+  border-radius: 50%;
+}
+
+.profile_picture_container {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+dialog button {
+  color: white;
+  padding: 5px 15px;
+  display: flex;
+  gap: 10px;
+  border: none;
+  cursor: pointer;
+}
+
+.profile_picture_container button:hover {
+  opacity: 0.7;
+}
+
+.profile_picture_container > div {
+  display: flex;
+  justify-content: space-between;
+}
+
+[data-upload-profile] {
+  background-color: var(--color-blue);
+}
+
+[data-delete-profile] {
+  background-color: var(--color-warning);
+}
+
+.profile_basic_info {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.profile_basic_info > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+dialog input {
+  padding: 5px 10px;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+}
+
+/* modal change password section */
+
+.change_password_title {
+  text-align: center;
+  margin-bottom: 10px;
+  font-weight: 200;
+}
+
+.change_passwords_inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.change_passwords_inputs > div {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.change_passwords_inputs span {
+  color: var(--color-warning);
+}
+
+.profile_change_password input[type="submit"] {
+  color: white;
+  padding: 5px 15px;
+  border: none;
+  cursor: pointer;
+  background-color: var(--color-blue);
+  border-radius: 0;
+  margin-top: 20px;
+}
+
+.profile_bottom_buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+[data-sign-out] {
+  border: 2px solid black;
+  background-color: #fff;
+  color: black;
+  font-weight: bold;
+}
+
+[data-save-changes] {
+  background-color: var(--color-blue);
 }
