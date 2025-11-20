@@ -1,5 +1,9 @@
-import { restaurants } from "./data.js";
+// API Configuration
+const API_BASE_URL = "https://media2.edu.metropolia.fi/restaurant/api/v1";
+const RESTAURANTS_ENDPOINT = `${API_BASE_URL}/restaurants`;
+const MENU_LANGUAGE = "fi";
 
+// Leaflet map
 var map = L.map("map").setView([0, 0], 1);
 
 const attribution =
@@ -9,8 +13,75 @@ const tileUrl = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 const tiles = L.tileLayer(tileUrl, { attribution });
 tiles.addTo(map);
 
-map.setView([60.1699, 24.9384], 13);
+// map.setView([60.1699, 24.9384], 13);
 
+// fetch restaurants data from api
+async function fetchData(url, apiKey) {
+  try {
+    const response = await fetch(url, {
+      headers: { "x-api-key": apiKey },
+    });
+    if (!response.ok) {
+      throw new Error(
+        `Request failed: ${response.status} ${response.statusText}`
+      );
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Fetch error:", error);
+    throw error;
+  }
+}
+
+// get user's location and display restaurants on map
+navigator.geolocation.getCurrentPosition(function (pos) {
+  const lat = pos.coords.latitude;
+  const long = pos.coords.longitude;
+
+  console.log(lat);
+  console.log(long);
+
+  const redIcon = L.icon({
+    iconUrl:
+      "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
+    shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41],
+  });
+  L.marker([lat, long], { icon: redIcon })
+    .addTo(map)
+    .bindPopup("Your location")
+    .openPopup();
+  map.setView([lat, long], 13);
+
+  // loop through restaurants and add marker onto map that corresponds to location
+  fetchData(RESTAURANTS_ENDPOINT)
+    .then((restaurants) => {
+      restaurants.forEach((restaurant) => {
+        // table.appendChild(createRestaurantRow(restaurant));
+
+        // const restaurant = restaurants[i];
+        const restaurantName = restaurant.name;
+        const restaurantAddress = restaurant.address;
+
+        const restaurantLong = restaurant.location.coordinates[0];
+        const restaurantLat = restaurant.location.coordinates[1];
+
+        const popupHtml = `<h3>${restaurantName}</h3><p>${restaurantAddress}</p>`;
+        L.marker([restaurantLat, restaurantLong])
+          .addTo(map)
+          .bindPopup(popupHtml);
+      });
+    })
+    .catch((err) => {
+      modal.innerHTML = `<form method="dialog"><h2>Error</h2><p>${err.message}</p><button>Close</button></form>`;
+      modal.showModal();
+    });
+});
+
+// modal
 const modal = document.querySelector("dialog");
 
 const profileButton = document.querySelector("[data-open-profile]");
@@ -24,21 +95,24 @@ profileCloseButton.addEventListener("click", () => {
   modal.close();
 });
 
-modal.showModal();
+// modal.showModal();
 
+// show restaurants in sidebar
 function renderRestaurants() {
   const container = document.querySelector(".sidebar_restaurants_list");
   if (!container) return;
   container.innerHTML = "";
 
   // assume `restaurants` (imported) is a well-formed array of objects
-  restaurants.forEach((r) => {
-    const div = document.createElement("div");
-    div.className = "restaurants_list_restaurant";
+  fetchData(RESTAURANTS_ENDPOINT)
+    .then((restaurants) => {
+      restaurants.forEach((r) => {
+        const div = document.createElement("div");
+        div.className = "restaurants_list_restaurant";
 
-    const providerName = r.company || r.provider || "";
+        const providerName = r.company || r.provider || "";
 
-    div.innerHTML = `
+        div.innerHTML = `
       <div class="restaurant_title_row">
         <h3>${r.name}</h3>
         <img src="./public/${
@@ -76,8 +150,13 @@ function renderRestaurants() {
       </div>
     `;
 
-    container.appendChild(div);
-  });
+        container.appendChild(div);
+      });
+    })
+    .catch((err) => {
+      modal.innerHTML = `<form method="dialog"><h2>Error</h2><p>${err.message}</p><button>Close</button></form>`;
+      modal.showModal();
+    });
 }
 
 renderRestaurants();
