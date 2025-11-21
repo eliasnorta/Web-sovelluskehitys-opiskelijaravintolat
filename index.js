@@ -131,16 +131,27 @@ async function getDailyMenuHtml(restaurantId) {
       );
     const data = await response.json();
     if (data.courses && data.courses.length > 0) {
-      return `<ul>${data.courses
-        .map(
-          (c) =>
-            `<li class="menu_item"><div><strong>${
-              c.name
-            }</strong></div><div class="menu_indent">${
-              c.price ? `<small>${c.price}</small>` : ""
-            }<div><small class="menu_diets">${c.diets}</small></div></div></li>`
-        )
-        .join("")}</ul>`;
+      return `
+        <h2 class="menu_title">Päivän menu:</h2>
+        <ul class="menu_ul">${data.courses
+          .map(
+            (c) =>
+              `<li class="menu_item">
+                <div class="menu_item_title_row">
+                  <div class="menu_item_title">
+                    ${c.name}
+                  </div>
+                  <div class="menu_item_price">
+                    ${c.price ? `<small>${c.price}</small>` : ""}
+                  </div>
+                </div>
+                <div class="menu_indent">
+                  <small class="menu_diets">${c.diets}</small>
+                </div>
+              </li>`
+          )
+          .join("")}</ul>
+      `;
     }
     return "<p>No menu available for today.</p>";
   } catch (err) {
@@ -158,20 +169,29 @@ async function getWeeklyMenuHtml(restaurantId) {
       );
     const data = await response.json();
     if (data.days && data.days.length > 0) {
-      return data.days
+      return `
+      <h2 class="menu_title">Viikon menu:</h2>
+      
+      ${data.days
         .map(
           (day) => `
             <div class="weekly_menu_day">
-              <h4>${day.date}</h4>
+              <h2>${day.date}</h2>
               <ul>
                 ${day.courses
                   .map(
                     (c) => `
                       <li class="menu_item">
-                        <div><strong>${c.name}</strong></div>
+                        <div class="menu_item_title_row">
+                          <div class="menu_item_title">
+                            ${c.name}
+                          </div>
+                          <div class="menu_item_price">
+                            ${c.price ? `<small>${c.price}</small>` : ""}
+                          </div>
+                        </div>
                         <div class="menu_indent">
-                          ${c.price ? `<small>${c.price}</small>` : ""}
-                          ${c.diets ? `<div><small class="menu_diets">${c.diets}</small></div>` : ""}
+                          <small class="menu_diets">${c.diets}</small>
                         </div>
                       </li>
                     `
@@ -181,7 +201,8 @@ async function getWeeklyMenuHtml(restaurantId) {
             </div>
           `
         )
-        .join("");
+        .join("")}
+    `;
     }
     return "<p>No weekly menu available.</p>";
   } catch (err) {
@@ -270,7 +291,13 @@ async function openMenu(restaurant) {
   let menuContent = targetDiv.querySelector(".restaurant_menu_popup");
   const arrow = targetDiv.querySelector(".menu_dropdown_arrow");
 
+  // If menuContent exists, toggle visibility robustly
   if (menuContent) {
+    // If an animation or async operation is in progress, cancel it
+    if (menuContent._pending) {
+      clearTimeout(menuContent._pending);
+      menuContent._pending = null;
+    }
     // Toggle visibility
     const isOpen = menuContent.style.display === "block";
     menuContent.style.display = isOpen ? "none" : "block";
@@ -278,38 +305,47 @@ async function openMenu(restaurant) {
     return;
   }
 
-  // Create menu popup with buttons and content
-  const dailyHtml = await getDailyMenuHtml(restaurant._id);
-  const weeklyHtml = await getWeeklyMenuHtml(restaurant._id);
+  // Mark as pending to prevent race conditions
   menuContent = document.createElement("div");
   menuContent.className = "restaurant_menu_popup";
   menuContent.style.display = "block";
-  menuContent.innerHTML = `
-    <div>
-      <div class="menu_buttons">
-        <button class="menu_day_button selected">päivä</button>
-        <button class="menu_week_button">viikko</button>
-      </div>
-      <div class="menu_content_area">${dailyHtml}</div>
-    </div>
-  `;
-  targetDiv.appendChild(menuContent);
+  menuContent._pending = true;
   arrow.style.transform = "rotate(180deg)";
 
-  // Add event listeners to buttons
-  const dayBtn = menuContent.querySelector('.menu_day_button');
-  const weekBtn = menuContent.querySelector('.menu_week_button');
-  const contentArea = menuContent.querySelector('.menu_content_area');
+  // Insert immediately, but fill content after both menus are loaded
+  targetDiv.appendChild(menuContent);
 
-  dayBtn.addEventListener('click', () => {
-    dayBtn.classList.add('selected');
-    weekBtn.classList.remove('selected');
-    contentArea.innerHTML = dailyHtml;
-  });
-  weekBtn.addEventListener('click', () => {
-    weekBtn.classList.add('selected');
-    dayBtn.classList.remove('selected');
-    contentArea.innerHTML = weeklyHtml;
+  // Fetch both menus in parallel
+  Promise.all([
+    getDailyMenuHtml(restaurant._id),
+    getWeeklyMenuHtml(restaurant._id),
+  ]).then(([dailyHtml, weeklyHtml]) => {
+    // If menuContent was removed (user closed quickly), abort
+    if (!targetDiv.contains(menuContent)) return;
+    menuContent._pending = null;
+    menuContent.innerHTML = `
+      <div>
+        <div class="menu_buttons">
+          <button class="menu_day_button selected">päivä</button>
+          <button class="menu_week_button">viikko</button>
+        </div>
+        <div class="menu_content_area">${dailyHtml}</div>
+      </div>
+    `;
+    // Add event listeners to buttons
+    const dayBtn = menuContent.querySelector(".menu_day_button");
+    const weekBtn = menuContent.querySelector(".menu_week_button");
+    const contentArea = menuContent.querySelector(".menu_content_area");
+    dayBtn.addEventListener("click", () => {
+      dayBtn.classList.add("selected");
+      weekBtn.classList.remove("selected");
+      contentArea.innerHTML = dailyHtml;
+    });
+    weekBtn.addEventListener("click", () => {
+      weekBtn.classList.add("selected");
+      dayBtn.classList.remove("selected");
+      contentArea.innerHTML = weeklyHtml;
+    });
   });
 }
 

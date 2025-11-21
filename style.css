@@ -5,7 +5,7 @@
 }
 
 body {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Inter", system-ui, sans-serif;
 }
 
 :root {
@@ -28,7 +28,7 @@ body {
   background: var(--sidebar-background-color);
   padding: 20px 20px 0px 20px;
   height: 100vh;
-  width: 30vw;
+  width: 50vw;
   min-width: 350px;
   max-width: 65vw;
   position: absolute;
@@ -164,20 +164,88 @@ body {
   position: absolute;
   background-color: white;
   z-index: 1;
-  width: 100%;
+  width: 101%;
+  margin-left: -1px;
   left: 0;
   margin-top: 16px;
   max-height: 600px;
   overflow-y: scroll;
+  padding: 0px 15px 15px 15px;
 }
 
 .restaurant_menu_popup > div {
-  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .menu_buttons {
   display: flex;
   gap: 5px;
+  margin-bottom: 20px;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 2;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  max-height: 400px;
+  min-height: 0;
+  padding-top: 20px;
+  background-color: white;
+}
+
+.menu_title {
+  font-weight: normal;
+  margin-bottom: 15px;
+  font-size: 1.6rem;
+}
+
+.menu_ul {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.menu_item {
+  list-style-type: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.menu_item_title_row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.menu_item_title {
+  font-weight: 500;
+}
+
+.menu_item_price {
+  color: var(--text-color-grey);
+  white-space: nowrap;
+}
+
+.menu_diets {
+  color: #7c7c7c;
+}
+
+/* weekly menu */
+.weekly_menu_day {
+  margin-bottom: 40px;
+}
+
+.weekly_menu_day h2 {
+  margin-bottom: 10px;
+}
+
+.weekly_menu_day ul {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
 }
 
 /* Highlight selected menu button */
