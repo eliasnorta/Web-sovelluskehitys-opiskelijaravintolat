@@ -24,13 +24,28 @@ body {
 /* sidebar */
 
 #sidebar {
+  overflow: auto;
   background: var(--sidebar-background-color);
-  padding: 20px;
+  padding: 20px 20px 0px 20px;
   height: 100vh;
   width: 25vw;
+  min-width: 20vw;
+  max-width: 65vw;
+  position: absolute;
   display: flex;
   flex-direction: column;
   gap: 15px;
+  z-index: 999;
+}
+
+#sidebar-resize-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+  background: #afafaf;
 }
 
 /* sidebar profile row */
@@ -84,13 +99,14 @@ body {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  padding-right: 18px;
+  /* padding-right: 18px; */
 }
 
 .restaurants_list_restaurant {
   background-color: #fff;
   border: 1px solid var(--border-color);
   padding: 15px;
+  position: relative;
 }
 
 .restaurant_title_row {
@@ -135,10 +151,23 @@ body {
   display: flex;
   align-items: baseline;
   gap: 6px;
+  cursor: pointer;
 }
 
-.menu_dropdown img {
+.menu_dropdown_arrow {
   width: 15px;
+  transition: transform 0.2s;
+}
+
+/* menu popup */
+.restaurant_menu_popup {
+  border: 1px solid var(--border-color);
+  position: absolute;
+  background-color: white;
+  z-index: 999;
+  width: 101%;
+  left: 0;
+  margin: 15px 0px 0px -1px;
 }
 
 /* leaflet map */

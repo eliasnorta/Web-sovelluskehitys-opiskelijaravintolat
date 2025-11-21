@@ -4,7 +4,10 @@ const RESTAURANTS_ENDPOINT = `${API_BASE_URL}/restaurants`;
 const MENU_LANGUAGE = "fi";
 
 // Leaflet map
-var map = L.map("map").setView([0, 0], 1);
+var map = L.map("map").setView([60.1699, 24.9384], 13);
+
+// pan map slighly to left by 200px
+map.panBy([-200, 0]);
 
 const attribution =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
@@ -12,8 +15,6 @@ const attribution =
 const tileUrl = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 const tiles = L.tileLayer(tileUrl, { attribution });
 tiles.addTo(map);
-
-// map.setView([60.1699, 24.9384], 13);
 
 // fetch restaurants data from api
 async function fetchData(url, apiKey) {
@@ -32,6 +33,28 @@ async function fetchData(url, apiKey) {
     throw error;
   }
 }
+
+// loop through restaurants and add marker onto map that corresponds to location
+fetchData(RESTAURANTS_ENDPOINT)
+  .then((restaurants) => {
+    restaurants.forEach((restaurant) => {
+      // table.appendChild(createRestaurantRow(restaurant));
+
+      // const restaurant = restaurants[i];
+      const restaurantName = restaurant.name;
+      const restaurantAddress = restaurant.address;
+
+      const restaurantLong = restaurant.location.coordinates[0];
+      const restaurantLat = restaurant.location.coordinates[1];
+
+      const popupHtml = `<h3>${restaurantName}</h3><p>${restaurantAddress}</p>`;
+      L.marker([restaurantLat, restaurantLong]).addTo(map).bindPopup(popupHtml);
+    });
+  })
+  .catch((err) => {
+    modal.innerHTML = `<form method="dialog"><h2>Error</h2><p>${err.message}</p><button>Close</button></form>`;
+    modal.showModal();
+  });
 
 // get user's location and display restaurants on map
 navigator.geolocation.getCurrentPosition(function (pos) {
@@ -55,30 +78,6 @@ navigator.geolocation.getCurrentPosition(function (pos) {
     .bindPopup("Your location")
     .openPopup();
   map.setView([lat, long], 13);
-
-  // loop through restaurants and add marker onto map that corresponds to location
-  fetchData(RESTAURANTS_ENDPOINT)
-    .then((restaurants) => {
-      restaurants.forEach((restaurant) => {
-        // table.appendChild(createRestaurantRow(restaurant));
-
-        // const restaurant = restaurants[i];
-        const restaurantName = restaurant.name;
-        const restaurantAddress = restaurant.address;
-
-        const restaurantLong = restaurant.location.coordinates[0];
-        const restaurantLat = restaurant.location.coordinates[1];
-
-        const popupHtml = `<h3>${restaurantName}</h3><p>${restaurantAddress}</p>`;
-        L.marker([restaurantLat, restaurantLong])
-          .addTo(map)
-          .bindPopup(popupHtml);
-      });
-    })
-    .catch((err) => {
-      modal.innerHTML = `<form method="dialog"><h2>Error</h2><p>${err.message}</p><button>Close</button></form>`;
-      modal.showModal();
-    });
 });
 
 // modal
@@ -97,6 +96,27 @@ profileCloseButton.addEventListener("click", () => {
 
 // modal.showModal();
 
+// resize sidebar
+const sidebar = document.getElementById("sidebar");
+const handle = document.getElementById("sidebar-resize-handle");
+let isResizing = false;
+
+handle.addEventListener("mousedown", function (e) {
+  isResizing = true;
+  document.body.style.cursor = "ew-resize";
+});
+
+document.addEventListener("mousemove", function (e) {
+  if (!isResizing) return;
+  const newWidth = e.clientX - sidebar.getBoundingClientRect().left;
+  sidebar.style.width = newWidth + "px";
+});
+
+document.addEventListener("mouseup", function () {
+  isResizing = false;
+  document.body.style.cursor = "";
+});
+
 // show restaurants in sidebar
 function renderRestaurants() {
   const container = document.querySelector(".sidebar_restaurants_list");
@@ -111,6 +131,12 @@ function renderRestaurants() {
         div.className = "restaurants_list_restaurant";
 
         const providerName = r.company || r.provider || "";
+
+        // Create menu content div. Hidden by default
+        const menuContent = document.createElement("div");
+        menuContent.className = "restaurant_menu_popup";
+        menuContent.style.display = "none";
+        menuContent.innerHTML = `<div style='padding:15px 0;'>Menu content for ${r.name}</div>`;
 
         div.innerHTML = `
       <div class="restaurant_title_row">
@@ -145,10 +171,21 @@ function renderRestaurants() {
         </div>
         <div class="menu_dropdown">
           <p>Menu</p>
-          <img src="./public/dropdown-arrow.svg" alt="menu-dropdown-arrow" />
+          <img class="menu_dropdown_arrow" src="./public/dropdown-arrow.svg" alt="menu-dropdown-arrow" />
         </div>
       </div>
     `;
+
+        div.appendChild(menuContent);
+
+        // Add toggle logic
+        const menuDropdown = div.querySelector(".menu_dropdown");
+        const arrow = div.querySelector(".menu_dropdown_arrow");
+        menuDropdown.addEventListener("click", () => {
+          const isOpen = menuContent.style.display === "block";
+          menuContent.style.display = isOpen ? "none" : "block";
+          arrow.style.transform = isOpen ? "rotate(0deg)" : "rotate(180deg)";
+        });
 
         container.appendChild(div);
       });
