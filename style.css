@@ -28,8 +28,8 @@ body {
   background: var(--sidebar-background-color);
   padding: 20px 20px 0px 20px;
   height: 100vh;
-  width: 25vw;
-  min-width: 20vw;
+  width: 30vw;
+  min-width: 350px;
   max-width: 65vw;
   position: absolute;
   display: flex;
@@ -161,20 +161,46 @@ body {
 
 /* menu popup */
 .restaurant_menu_popup {
-  border: 1px solid var(--border-color);
   position: absolute;
   background-color: white;
-  z-index: 999;
-  width: 101%;
+  z-index: 1;
+  width: 100%;
   left: 0;
-  margin: 15px 0px 0px -1px;
+  margin-top: 16px;
+  max-height: 600px;
+  overflow-y: scroll;
+}
+
+.restaurant_menu_popup > div {
+  padding: 15px;
+}
+
+.menu_buttons {
+  display: flex;
+  gap: 5px;
+}
+
+/* Highlight selected menu button */
+.menu_buttons .selected {
+  background-color: var(--color-blue);
+  color: #fff;
+}
+
+.restaurant_menu_popup button {
+  border: 2px solid var(--border-color);
+  padding: 8px 20px;
+  background-color: white;
+  width: 100%;
+  font-weight: bold;
+  cursor: pointer;
 }
 
 /* leaflet map */
-.map_selection {
-  width: 75vw;
+.map_section {
+  width: 100vw;
   height: 100vh;
   position: fixed;
+  display: block;
 }
 
 /* Modal */

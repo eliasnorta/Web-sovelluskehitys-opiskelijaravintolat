@@ -3,11 +3,14 @@ const API_BASE_URL = "https://media2.edu.metropolia.fi/restaurant/api/v1";
 const RESTAURANTS_ENDPOINT = `${API_BASE_URL}/restaurants`;
 const MENU_LANGUAGE = "fi";
 
+const pan_map = -100;
+
 // Leaflet map
 var map = L.map("map").setView([60.1699, 24.9384], 13);
 
-// pan map slighly to left by 200px
-map.panBy([-200, 0]);
+// pan map slighly to left by 10%
+// const mapWidth = map.getSize().x;
+map.panBy([pan_map, 0]);
 
 const attribution =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
@@ -78,6 +81,7 @@ navigator.geolocation.getCurrentPosition(function (pos) {
     .bindPopup("Your location")
     .openPopup();
   map.setView([lat, long], 13);
+  map.panBy([pan_map, 0]);
 });
 
 // modal
@@ -117,13 +121,81 @@ document.addEventListener("mouseup", function () {
   document.body.style.cursor = "";
 });
 
+async function getDailyMenuHtml(restaurantId) {
+  try {
+    const url = `${API_BASE_URL}/restaurants/daily/${restaurantId}/${MENU_LANGUAGE}`;
+    const response = await fetch(url);
+    if (!response.ok)
+      throw new Error(
+        `Menu fetch failed: ${response.status} ${response.statusText}`
+      );
+    const data = await response.json();
+    if (data.courses && data.courses.length > 0) {
+      return `<ul>${data.courses
+        .map(
+          (c) =>
+            `<li class="menu_item"><div><strong>${
+              c.name
+            }</strong></div><div class="menu_indent">${
+              c.price ? `<small>${c.price}</small>` : ""
+            }<div><small class="menu_diets">${c.diets}</small></div></div></li>`
+        )
+        .join("")}</ul>`;
+    }
+    return "<p>No menu available for today.</p>";
+  } catch (err) {
+    return `<p>Error loading menu: ${err.message}</p>`;
+  }
+}
+
+async function getWeeklyMenuHtml(restaurantId) {
+  try {
+    const url = `${API_BASE_URL}/restaurants/weekly/${restaurantId}/${MENU_LANGUAGE}`;
+    const response = await fetch(url);
+    if (!response.ok)
+      throw new Error(
+        `Menu fetch failed: ${response.status} ${response.statusText}`
+      );
+    const data = await response.json();
+    if (data.days && data.days.length > 0) {
+      return data.days
+        .map(
+          (day) => `
+            <div class="weekly_menu_day">
+              <h4>${day.date}</h4>
+              <ul>
+                ${day.courses
+                  .map(
+                    (c) => `
+                      <li class="menu_item">
+                        <div><strong>${c.name}</strong></div>
+                        <div class="menu_indent">
+                          ${c.price ? `<small>${c.price}</small>` : ""}
+                          ${c.diets ? `<div><small class="menu_diets">${c.diets}</small></div>` : ""}
+                        </div>
+                      </li>
+                    `
+                  )
+                  .join("")}
+              </ul>
+            </div>
+          `
+        )
+        .join("");
+    }
+    return "<p>No weekly menu available.</p>";
+  } catch (err) {
+    return `<p>Error loading menu: ${err.message}</p>`;
+  }
+}
+
+const container = document.querySelector(".sidebar_restaurants_list");
+
 // show restaurants in sidebar
 function renderRestaurants() {
-  const container = document.querySelector(".sidebar_restaurants_list");
   if (!container) return;
   container.innerHTML = "";
 
-  // assume `restaurants` (imported) is a well-formed array of objects
   fetchData(RESTAURANTS_ENDPOINT)
     .then((restaurants) => {
       restaurants.forEach((r) => {
@@ -131,12 +203,6 @@ function renderRestaurants() {
         div.className = "restaurants_list_restaurant";
 
         const providerName = r.company || r.provider || "";
-
-        // Create menu content div. Hidden by default
-        const menuContent = document.createElement("div");
-        menuContent.className = "restaurant_menu_popup";
-        menuContent.style.display = "none";
-        menuContent.innerHTML = `<div style='padding:15px 0;'>Menu content for ${r.name}</div>`;
 
         div.innerHTML = `
       <div class="restaurant_title_row">
@@ -176,15 +242,10 @@ function renderRestaurants() {
       </div>
     `;
 
-        div.appendChild(menuContent);
-
-        // Add toggle logic
+        // toggle menu
         const menuDropdown = div.querySelector(".menu_dropdown");
-        const arrow = div.querySelector(".menu_dropdown_arrow");
         menuDropdown.addEventListener("click", () => {
-          const isOpen = menuContent.style.display === "block";
-          menuContent.style.display = isOpen ? "none" : "block";
-          arrow.style.transform = isOpen ? "rotate(0deg)" : "rotate(180deg)";
+          openMenu(r);
         });
 
         container.appendChild(div);
@@ -194,6 +255,62 @@ function renderRestaurants() {
       modal.innerHTML = `<form method="dialog"><h2>Error</h2><p>${err.message}</p><button>Close</button></form>`;
       modal.showModal();
     });
+}
+
+async function openMenu(restaurant) {
+  const divs = document.querySelectorAll(".restaurants_list_restaurant");
+  let targetDiv = null;
+  divs.forEach((div) => {
+    const name = div.querySelector(".restaurant_title_row h3")?.textContent;
+    if (name === restaurant.name) targetDiv = div;
+  });
+  if (!targetDiv) return;
+
+  // Check if menu popup already exists
+  let menuContent = targetDiv.querySelector(".restaurant_menu_popup");
+  const arrow = targetDiv.querySelector(".menu_dropdown_arrow");
+
+  if (menuContent) {
+    // Toggle visibility
+    const isOpen = menuContent.style.display === "block";
+    menuContent.style.display = isOpen ? "none" : "block";
+    arrow.style.transform = isOpen ? "rotate(0deg)" : "rotate(180deg)";
+    return;
+  }
+
+  // Create menu popup with buttons and content
+  const dailyHtml = await getDailyMenuHtml(restaurant._id);
+  const weeklyHtml = await getWeeklyMenuHtml(restaurant._id);
+  menuContent = document.createElement("div");
+  menuContent.className = "restaurant_menu_popup";
+  menuContent.style.display = "block";
+  menuContent.innerHTML = `
+    <div>
+      <div class="menu_buttons">
+        <button class="menu_day_button selected">päivä</button>
+        <button class="menu_week_button">viikko</button>
+      </div>
+      <div class="menu_content_area">${dailyHtml}</div>
+    </div>
+  `;
+  targetDiv.appendChild(menuContent);
+  arrow.style.transform = "rotate(180deg)";
+
+  // Add event listeners to buttons
+  const dayBtn = menuContent.querySelector('.menu_day_button');
+  const weekBtn = menuContent.querySelector('.menu_week_button');
+  const contentArea = menuContent.querySelector('.menu_content_area');
+
+  dayBtn.addEventListener('click', () => {
+    dayBtn.classList.add('selected');
+    weekBtn.classList.remove('selected');
+    contentArea.innerHTML = dailyHtml;
+  });
+  weekBtn.addEventListener('click', () => {
+    weekBtn.classList.add('selected');
+    dayBtn.classList.remove('selected');
+    contentArea.innerHTML = weeklyHtml;
+  });
 }
 
 renderRestaurants();
