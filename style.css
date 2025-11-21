@@ -5,7 +5,7 @@
 }
 
 body {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Inter", system-ui, sans-serif;
 }
 
 :root {
@@ -24,13 +24,28 @@ body {
 /* sidebar */
 
 #sidebar {
+  overflow: auto;
   background: var(--sidebar-background-color);
-  padding: 20px;
+  padding: 20px 20px 0px 20px;
   height: 100vh;
-  width: 25vw;
+  width: 50vw;
+  min-width: 350px;
+  max-width: 65vw;
+  position: absolute;
   display: flex;
   flex-direction: column;
   gap: 15px;
+  z-index: 999;
+}
+
+#sidebar-resize-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+  background: #afafaf;
 }
 
 /* sidebar profile row */
@@ -84,13 +99,14 @@ body {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  padding-right: 18px;
+  /* padding-right: 18px; */
 }
 
 .restaurants_list_restaurant {
   background-color: #fff;
   border: 1px solid var(--border-color);
   padding: 15px;
+  position: relative;
 }
 
 .restaurant_title_row {
@@ -135,17 +151,124 @@ body {
   display: flex;
   align-items: baseline;
   gap: 6px;
+  cursor: pointer;
 }
 
-.menu_dropdown img {
+.menu_dropdown_arrow {
   width: 15px;
+  transition: transform 0.2s;
+}
+
+/* menu popup */
+.restaurant_menu_popup {
+  position: absolute;
+  background-color: white;
+  z-index: 1;
+  width: 101%;
+  margin-left: -1px;
+  left: 0;
+  margin-top: 16px;
+  max-height: 600px;
+  overflow-y: scroll;
+  padding: 0px 15px 15px 15px;
+}
+
+.restaurant_menu_popup > div {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.menu_buttons {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 20px;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 2;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  max-height: 400px;
+  min-height: 0;
+  padding-top: 20px;
+  background-color: white;
+}
+
+.menu_title {
+  font-weight: normal;
+  margin-bottom: 15px;
+  font-size: 1.6rem;
+}
+
+.menu_ul {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.menu_item {
+  list-style-type: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.menu_item_title_row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.menu_item_title {
+  font-weight: 500;
+}
+
+.menu_item_price {
+  color: var(--text-color-grey);
+  white-space: nowrap;
+}
+
+.menu_diets {
+  color: #7c7c7c;
+}
+
+/* weekly menu */
+.weekly_menu_day {
+  margin-bottom: 40px;
+}
+
+.weekly_menu_day h2 {
+  margin-bottom: 10px;
+}
+
+.weekly_menu_day ul {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+/* Highlight selected menu button */
+.menu_buttons .selected {
+  background-color: var(--color-blue);
+  color: #fff;
+}
+
+.restaurant_menu_popup button {
+  border: 2px solid var(--border-color);
+  padding: 8px 20px;
+  background-color: white;
+  width: 100%;
+  font-weight: bold;
+  cursor: pointer;
 }
 
 /* leaflet map */
-.map_selection {
-  width: 75vw;
+.map_section {
+  width: 100vw;
   height: 100vh;
   position: fixed;
+  display: block;
 }
 
 /* Modal */

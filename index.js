@@ -3,8 +3,14 @@ const API_BASE_URL = "https://media2.edu.metropolia.fi/restaurant/api/v1";
 const RESTAURANTS_ENDPOINT = `${API_BASE_URL}/restaurants`;
 const MENU_LANGUAGE = "fi";
 
+const pan_map = -100;
+
 // Leaflet map
-var map = L.map("map").setView([0, 0], 1);
+var map = L.map("map").setView([60.1699, 24.9384], 13);
+
+// pan map slighly to left by 10%
+// const mapWidth = map.getSize().x;
+map.panBy([pan_map, 0]);
 
 const attribution =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
@@ -12,8 +18,6 @@ const attribution =
 const tileUrl = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 const tiles = L.tileLayer(tileUrl, { attribution });
 tiles.addTo(map);
-
-// map.setView([60.1699, 24.9384], 13);
 
 // fetch restaurants data from api
 async function fetchData(url, apiKey) {
@@ -32,6 +36,28 @@ async function fetchData(url, apiKey) {
     throw error;
   }
 }
+
+// loop through restaurants and add marker onto map that corresponds to location
+fetchData(RESTAURANTS_ENDPOINT)
+  .then((restaurants) => {
+    restaurants.forEach((restaurant) => {
+      // table.appendChild(createRestaurantRow(restaurant));
+
+      // const restaurant = restaurants[i];
+      const restaurantName = restaurant.name;
+      const restaurantAddress = restaurant.address;
+
+      const restaurantLong = restaurant.location.coordinates[0];
+      const restaurantLat = restaurant.location.coordinates[1];
+
+      const popupHtml = `<h3>${restaurantName}</h3><p>${restaurantAddress}</p>`;
+      L.marker([restaurantLat, restaurantLong]).addTo(map).bindPopup(popupHtml);
+    });
+  })
+  .catch((err) => {
+    modal.innerHTML = `<form method="dialog"><h2>Error</h2><p>${err.message}</p><button>Close</button></form>`;
+    modal.showModal();
+  });
 
 // get user's location and display restaurants on map
 navigator.geolocation.getCurrentPosition(function (pos) {
@@ -55,30 +81,7 @@ navigator.geolocation.getCurrentPosition(function (pos) {
     .bindPopup("Your location")
     .openPopup();
   map.setView([lat, long], 13);
-
-  // loop through restaurants and add marker onto map that corresponds to location
-  fetchData(RESTAURANTS_ENDPOINT)
-    .then((restaurants) => {
-      restaurants.forEach((restaurant) => {
-        // table.appendChild(createRestaurantRow(restaurant));
-
-        // const restaurant = restaurants[i];
-        const restaurantName = restaurant.name;
-        const restaurantAddress = restaurant.address;
-
-        const restaurantLong = restaurant.location.coordinates[0];
-        const restaurantLat = restaurant.location.coordinates[1];
-
-        const popupHtml = `<h3>${restaurantName}</h3><p>${restaurantAddress}</p>`;
-        L.marker([restaurantLat, restaurantLong])
-          .addTo(map)
-          .bindPopup(popupHtml);
-      });
-    })
-    .catch((err) => {
-      modal.innerHTML = `<form method="dialog"><h2>Error</h2><p>${err.message}</p><button>Close</button></form>`;
-      modal.showModal();
-    });
+  map.panBy([pan_map, 0]);
 });
 
 // modal
@@ -97,13 +100,123 @@ profileCloseButton.addEventListener("click", () => {
 
 // modal.showModal();
 
+// resize sidebar
+const sidebar = document.getElementById("sidebar");
+const handle = document.getElementById("sidebar-resize-handle");
+let isResizing = false;
+
+handle.addEventListener("mousedown", function (e) {
+  isResizing = true;
+  document.body.style.cursor = "ew-resize";
+});
+
+document.addEventListener("mousemove", function (e) {
+  if (!isResizing) return;
+  const newWidth = e.clientX - sidebar.getBoundingClientRect().left;
+  sidebar.style.width = newWidth + "px";
+});
+
+document.addEventListener("mouseup", function () {
+  isResizing = false;
+  document.body.style.cursor = "";
+});
+
+async function getDailyMenuHtml(restaurantId) {
+  try {
+    const url = `${API_BASE_URL}/restaurants/daily/${restaurantId}/${MENU_LANGUAGE}`;
+    const response = await fetch(url);
+    if (!response.ok)
+      throw new Error(
+        `Menu fetch failed: ${response.status} ${response.statusText}`
+      );
+    const data = await response.json();
+    if (data.courses && data.courses.length > 0) {
+      return `
+        <h2 class="menu_title">Päivän menu:</h2>
+        <ul class="menu_ul">${data.courses
+          .map(
+            (c) =>
+              `<li class="menu_item">
+                <div class="menu_item_title_row">
+                  <div class="menu_item_title">
+                    ${c.name}
+                  </div>
+                  <div class="menu_item_price">
+                    ${c.price ? `<small>${c.price}</small>` : ""}
+                  </div>
+                </div>
+                <div class="menu_indent">
+                  <small class="menu_diets">${c.diets}</small>
+                </div>
+              </li>`
+          )
+          .join("")}</ul>
+      `;
+    }
+    return "<p>No menu available for today.</p>";
+  } catch (err) {
+    return `<p>Error loading menu: ${err.message}</p>`;
+  }
+}
+
+async function getWeeklyMenuHtml(restaurantId) {
+  try {
+    const url = `${API_BASE_URL}/restaurants/weekly/${restaurantId}/${MENU_LANGUAGE}`;
+    const response = await fetch(url);
+    if (!response.ok)
+      throw new Error(
+        `Menu fetch failed: ${response.status} ${response.statusText}`
+      );
+    const data = await response.json();
+    if (data.days && data.days.length > 0) {
+      return `
+      <h2 class="menu_title">Viikon menu:</h2>
+      
+      ${data.days
+        .map(
+          (day) => `
+            <div class="weekly_menu_day">
+              <h2>${day.date}</h2>
+              <ul>
+                ${day.courses
+                  .map(
+                    (c) => `
+                      <li class="menu_item">
+                        <div class="menu_item_title_row">
+                          <div class="menu_item_title">
+                            ${c.name}
+                          </div>
+                          <div class="menu_item_price">
+                            ${c.price ? `<small>${c.price}</small>` : ""}
+                          </div>
+                        </div>
+                        <div class="menu_indent">
+                          <small class="menu_diets">${c.diets}</small>
+                        </div>
+                      </li>
+                    `
+                  )
+                  .join("")}
+              </ul>
+            </div>
+          `
+        )
+        .join("")}
+    `;
+    }
+    return "<p>No weekly menu available.</p>";
+  } catch (err) {
+    return `<p>Error loading menu: ${err.message}</p>`;
+  }
+}
+
+const container = document.querySelector(".sidebar_restaurants_list");
+
 // show restaurants in sidebar
 function renderRestaurants() {
-  const container = document.querySelector(".sidebar_restaurants_list");
   if (!container) return;
   container.innerHTML = "";
 
-  // assume `restaurants` (imported) is a well-formed array of objects
   fetchData(RESTAURANTS_ENDPOINT)
     .then((restaurants) => {
       restaurants.forEach((r) => {
@@ -145,10 +258,16 @@ function renderRestaurants() {
         </div>
         <div class="menu_dropdown">
           <p>Menu</p>
-          <img src="./public/dropdown-arrow.svg" alt="menu-dropdown-arrow" />
+          <img class="menu_dropdown_arrow" src="./public/dropdown-arrow.svg" alt="menu-dropdown-arrow" />
         </div>
       </div>
     `;
+
+        // toggle menu
+        const menuDropdown = div.querySelector(".menu_dropdown");
+        menuDropdown.addEventListener("click", () => {
+          openMenu(r);
+        });
 
         container.appendChild(div);
       });
@@ -157,6 +276,77 @@ function renderRestaurants() {
       modal.innerHTML = `<form method="dialog"><h2>Error</h2><p>${err.message}</p><button>Close</button></form>`;
       modal.showModal();
     });
+}
+
+async function openMenu(restaurant) {
+  const divs = document.querySelectorAll(".restaurants_list_restaurant");
+  let targetDiv = null;
+  divs.forEach((div) => {
+    const name = div.querySelector(".restaurant_title_row h3")?.textContent;
+    if (name === restaurant.name) targetDiv = div;
+  });
+  if (!targetDiv) return;
+
+  // Check if menu popup already exists
+  let menuContent = targetDiv.querySelector(".restaurant_menu_popup");
+  const arrow = targetDiv.querySelector(".menu_dropdown_arrow");
+
+  // If menuContent exists, toggle visibility robustly
+  if (menuContent) {
+    // If an animation or async operation is in progress, cancel it
+    if (menuContent._pending) {
+      clearTimeout(menuContent._pending);
+      menuContent._pending = null;
+    }
+    // Toggle visibility
+    const isOpen = menuContent.style.display === "block";
+    menuContent.style.display = isOpen ? "none" : "block";
+    arrow.style.transform = isOpen ? "rotate(0deg)" : "rotate(180deg)";
+    return;
+  }
+
+  // Mark as pending to prevent race conditions
+  menuContent = document.createElement("div");
+  menuContent.className = "restaurant_menu_popup";
+  menuContent.style.display = "block";
+  menuContent._pending = true;
+  arrow.style.transform = "rotate(180deg)";
+
+  // Insert immediately, but fill content after both menus are loaded
+  targetDiv.appendChild(menuContent);
+
+  // Fetch both menus in parallel
+  Promise.all([
+    getDailyMenuHtml(restaurant._id),
+    getWeeklyMenuHtml(restaurant._id),
+  ]).then(([dailyHtml, weeklyHtml]) => {
+    // If menuContent was removed (user closed quickly), abort
+    if (!targetDiv.contains(menuContent)) return;
+    menuContent._pending = null;
+    menuContent.innerHTML = `
+      <div>
+        <div class="menu_buttons">
+          <button class="menu_day_button selected">päivä</button>
+          <button class="menu_week_button">viikko</button>
+        </div>
+        <div class="menu_content_area">${dailyHtml}</div>
+      </div>
+    `;
+    // Add event listeners to buttons
+    const dayBtn = menuContent.querySelector(".menu_day_button");
+    const weekBtn = menuContent.querySelector(".menu_week_button");
+    const contentArea = menuContent.querySelector(".menu_content_area");
+    dayBtn.addEventListener("click", () => {
+      dayBtn.classList.add("selected");
+      weekBtn.classList.remove("selected");
+      contentArea.innerHTML = dailyHtml;
+    });
+    weekBtn.addEventListener("click", () => {
+      weekBtn.classList.add("selected");
+      dayBtn.classList.remove("selected");
+      contentArea.innerHTML = weeklyHtml;
+    });
+  });
 }
 
 renderRestaurants();
