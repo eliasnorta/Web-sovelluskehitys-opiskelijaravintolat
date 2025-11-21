@@ -1,3 +1,32 @@
+let allRestaurants = [];
+
+var map = L.map("map").setView([60.1699, 24.9384], 13);
+// Reset sidebar when any marker popup is closed
+map.on("popupclose", function () {
+  window.unselectRestaurant();
+});
+let selectedRestaurant = null;
+// open filter dropdown
+const filterButton = document.querySelector(".filter_button");
+
+filterButton.addEventListener("click", () => {
+  document.getElementById("filterDropdown").classList.toggle("show");
+});
+
+// Close the dropdown if the user clicks outside of it
+window.onclick = function (event) {
+  if (!event.target.matches(".filter_button")) {
+    var dropdowns = document.getElementsByClassName("dropdown-content");
+    var i;
+    for (i = 0; i < dropdowns.length; i++) {
+      var openDropdown = dropdowns[i];
+      if (openDropdown.classList.contains("show")) {
+        openDropdown.classList.remove("show");
+      }
+    }
+  }
+};
+
 function handleOpenMenu(targetDiv) {
   targetDiv.classList.add("selected-restaurant");
   if (targetDiv && targetDiv.scrollIntoView) {
@@ -14,9 +43,6 @@ const RESTAURANTS_ENDPOINT = `${API_BASE_URL}/restaurants`;
 const MENU_LANGUAGE = "fi";
 
 const pan_map = -100;
-
-// Leaflet map
-var map = L.map("map").setView([60.1699, 24.9384], 13);
 
 // pan map slighly to left by 10%
 // const mapWidth = map.getSize().x;
@@ -50,19 +76,22 @@ async function fetchData(url, apiKey) {
 // loop through restaurants and add marker onto map that corresponds to location
 fetchData(RESTAURANTS_ENDPOINT)
   .then((restaurants) => {
+    allRestaurants = restaurants;
     restaurants.forEach((restaurant) => {
-      // table.appendChild(createRestaurantRow(restaurant));
-
-      // const restaurant = restaurants[i];
       const restaurantName = restaurant.name;
       const restaurantAddress = restaurant.address;
-
       const restaurantLong = restaurant.location.coordinates[0];
       const restaurantLat = restaurant.location.coordinates[1];
-
       const popupHtml = `<h3>${restaurantName}</h3><p>${restaurantAddress}</p>`;
-      L.marker([restaurantLat, restaurantLong]).addTo(map).bindPopup(popupHtml);
+      const marker = L.marker([restaurantLat, restaurantLong])
+        .addTo(map)
+        .bindPopup(popupHtml);
+      marker.on("click", () => {
+        selectedRestaurant = restaurant;
+        renderRestaurants();
+      });
     });
+    renderRestaurants();
   })
   .catch((err) => {
     modal.innerHTML = `<form method="dialog"><h2>Error</h2><p>${err.message}</p><button>Close</button></form>`;
@@ -226,16 +255,19 @@ const container = document.querySelector(".sidebar_restaurants_list");
 function renderRestaurants() {
   if (!container) return;
   container.innerHTML = "";
-
-  fetchData(RESTAURANTS_ENDPOINT)
-    .then((restaurants) => {
-      restaurants.forEach((r) => {
-        const div = document.createElement("div");
-        div.className = "restaurants_list_restaurant";
-
-        const providerName = r.company || r.provider || "";
-
-        div.innerHTML = `
+  let restaurantsToShow = allRestaurants;
+  if (selectedRestaurant) {
+    restaurantsToShow = [selectedRestaurant];
+  }
+  restaurantsToShow.forEach((r) => {
+    const div = document.createElement("div");
+    div.className = "restaurants_list_restaurant";
+    // If only one restaurant is shown (marker selected), use selected-restaurant class for blue border
+    if (restaurantsToShow.length === 1 && selectedRestaurant) {
+      div.classList.add("selected-restaurant");
+    }
+    const providerName = r.company || r.provider || "";
+    div.innerHTML = `
       <div class="restaurant_title_row">
         <h3>${r.name}</h3>
         <img src="./public/${
@@ -272,21 +304,19 @@ function renderRestaurants() {
         </div>
       </div>
     `;
-
-        // toggle menu
-        const menuDropdown = div.querySelector(".menu_dropdown");
-        menuDropdown.addEventListener("click", () => {
-          openMenu(r);
-        });
-
-        container.appendChild(div);
-      });
-    })
-    .catch((err) => {
-      modal.innerHTML = `<form method="dialog"><h2>Error</h2><p>${err.message}</p><button>Close</button></form>`;
-      modal.showModal();
+    // toggle menu
+    const menuDropdown = div.querySelector(".menu_dropdown");
+    menuDropdown.addEventListener("click", () => {
+      openMenu(r);
     });
+    container.appendChild(div);
+  });
 }
+// Unselect restaurant and show all again
+window.unselectRestaurant = function () {
+  selectedRestaurant = null;
+  renderRestaurants();
+};
 
 async function openMenu(restaurant) {
   // Close all other open menus except the one for this restaurant

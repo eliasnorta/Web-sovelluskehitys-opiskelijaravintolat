@@ -39,13 +39,30 @@
           </div>
         </div>
         <div class="sidebar_sort">
-          <div>
+          <button>
             <img src="./public/sort-icon.svg" alt="sort-icon" />
             <p>Sort by</p>
-          </div>
-          <div>
+          </button>
+          <button class="filter_button">
             <img src="./public/filter-icon.svg" alt="filter-icon" />
             <p>Filter</p>
+          </button>
+          <!-- filter dropdown menu -->
+          <div id="filterDropdown" class="dropdown-content">
+            <h2>Filter by</h2>
+            <label for="city">Kaupunki</label>
+            <select id="city" name="filter">
+              <option value="all">Kaikki</option>
+              <option value="sodexo">Sodexo</option>
+              <option value="compass">Compass</option>
+              <!-- Add more options as needed -->
+            </select>
+            <label for="serviceprovider">Palveluntarjoaja</label>
+            <select id="serviceprovider" name="filter">
+              <option value="all">Kaikki</option>
+              <option value="sodexo">Sodexo</option>
+              <option value="compass">Compass</option>
+            </select>
           </div>
         </div>
         <div class="sidebar_restaurants_list"></div>
