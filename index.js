@@ -1,3 +1,13 @@
+function handleOpenMenu(targetDiv) {
+  targetDiv.classList.add("selected-restaurant");
+  if (targetDiv && targetDiv.scrollIntoView) {
+    targetDiv.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+function handleCloseMenu(targetDiv) {
+  targetDiv.classList.remove("selected-restaurant");
+}
 // API Configuration
 const API_BASE_URL = "https://media2.edu.metropolia.fi/restaurant/api/v1";
 const RESTAURANTS_ENDPOINT = `${API_BASE_URL}/restaurants`;
@@ -279,6 +289,7 @@ function renderRestaurants() {
 }
 
 async function openMenu(restaurant) {
+  // Close all other open menus except the one for this restaurant
   const divs = document.querySelectorAll(".restaurants_list_restaurant");
   let targetDiv = null;
   divs.forEach((div) => {
@@ -286,22 +297,39 @@ async function openMenu(restaurant) {
     if (name === restaurant.name) targetDiv = div;
   });
   if (!targetDiv) return;
+  // Remove selected class from all cards
+  divs.forEach((div) => div.classList.remove("selected-restaurant"));
 
+  // Remove selected class from all cards
+  divs.forEach((div) => div.classList.remove("selected-restaurant"));
+  // Add selected class to the active card
+  targetDiv.classList.add("selected-restaurant");
+
+  document.querySelectorAll(".restaurant_menu_popup").forEach((popup) => {
+    // If this is the menu for the clicked restaurant, skip for now
+    if (popup.parentElement === targetDiv) return;
+    popup.style.display = "none";
+    const arrow = popup.parentElement.querySelector(".menu_dropdown_arrow");
+    if (arrow) arrow.style.transform = "rotate(0deg)";
+  });
   // Check if menu popup already exists
   let menuContent = targetDiv.querySelector(".restaurant_menu_popup");
   const arrow = targetDiv.querySelector(".menu_dropdown_arrow");
 
   // If menuContent exists, toggle visibility robustly
   if (menuContent) {
-    // If an animation or async operation is in progress, cancel it
     if (menuContent._pending) {
       clearTimeout(menuContent._pending);
       menuContent._pending = null;
     }
-    // Toggle visibility
     const isOpen = menuContent.style.display === "block";
     menuContent.style.display = isOpen ? "none" : "block";
     arrow.style.transform = isOpen ? "rotate(0deg)" : "rotate(180deg)";
+    if (isOpen) {
+      handleCloseMenu(targetDiv);
+    } else {
+      handleOpenMenu(targetDiv);
+    }
     return;
   }
 
@@ -314,6 +342,7 @@ async function openMenu(restaurant) {
 
   // Insert immediately, but fill content after both menus are loaded
   targetDiv.appendChild(menuContent);
+  handleOpenMenu(targetDiv);
 
   // Fetch both menus in parallel
   Promise.all([
@@ -340,11 +369,19 @@ async function openMenu(restaurant) {
       dayBtn.classList.add("selected");
       weekBtn.classList.remove("selected");
       contentArea.innerHTML = dailyHtml;
+      // Scroll restaurant card to top
+      if (targetDiv && targetDiv.scrollIntoView) {
+        targetDiv.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     });
     weekBtn.addEventListener("click", () => {
       weekBtn.classList.add("selected");
       dayBtn.classList.remove("selected");
       contentArea.innerHTML = weeklyHtml;
+      // Scroll restaurant card to top
+      if (targetDiv && targetDiv.scrollIntoView) {
+        targetDiv.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     });
   });
 }
