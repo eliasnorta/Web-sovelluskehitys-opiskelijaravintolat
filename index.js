@@ -1,12 +1,57 @@
+let allRestaurants = [];
+
+var map = L.map("map").setView([60.1699, 24.9384], 13);
+// Reset sidebar when any marker popup is closed
+map.on("popupclose", function () {
+  window.unselectRestaurant();
+});
+let selectedRestaurant = null;
+let filterCity = "all";
+let filterProvider = "all";
+let mapMarkers = [];
+
+// open filter dropdown
+const filterButton = document.querySelector(".filter_button");
+
+filterButton.addEventListener("click", () => {
+  document.getElementById("filterDropdown").classList.toggle("show");
+});
+
+const filterDropdown = document.getElementById("filterDropdown");
+
+// Close the dropdown if the user clicks outside of it
+window.onclick = function (event) {
+  if (
+    !event.target.matches(".filter_button") &&
+    !filterDropdown.contains(event.target)
+  ) {
+    var dropdowns = document.getElementsByClassName("dropdown-content");
+    var i;
+    for (i = 0; i < dropdowns.length; i++) {
+      var openDropdown = dropdowns[i];
+      if (openDropdown.classList.contains("show")) {
+        openDropdown.classList.remove("show");
+      }
+    }
+  }
+};
+
+function handleOpenMenu(targetDiv) {
+  targetDiv.classList.add("selected-restaurant");
+  if (targetDiv && targetDiv.scrollIntoView) {
+    targetDiv.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+function handleCloseMenu(targetDiv) {
+  targetDiv.classList.remove("selected-restaurant");
+}
 // API Configuration
 const API_BASE_URL = "https://media2.edu.metropolia.fi/restaurant/api/v1";
 const RESTAURANTS_ENDPOINT = `${API_BASE_URL}/restaurants`;
 const MENU_LANGUAGE = "fi";
 
 const pan_map = -100;
-
-// Leaflet map
-var map = L.map("map").setView([60.1699, 24.9384], 13);
 
 // pan map slighly to left by 10%
 // const mapWidth = map.getSize().x;
@@ -40,19 +85,68 @@ async function fetchData(url, apiKey) {
 // loop through restaurants and add marker onto map that corresponds to location
 fetchData(RESTAURANTS_ENDPOINT)
   .then((restaurants) => {
-    restaurants.forEach((restaurant) => {
-      // table.appendChild(createRestaurantRow(restaurant));
+    allRestaurants = restaurants;
 
-      // const restaurant = restaurants[i];
+    // Populate city filter dropdown with unique cities from API
+    const uniqueCities = [
+      ...new Set(restaurants.map((r) => r.city).filter((city) => city)),
+    ];
+    const citySelect = document.getElementById("city");
+    // Clear existing options except "Kaikki"
+    citySelect.innerHTML = '<option value="all">Kaikki</option>';
+    // Add city options
+    uniqueCities.forEach((city) => {
+      const option = document.createElement("option");
+      option.value = city;
+      option.textContent = city;
+      citySelect.appendChild(option);
+    });
+
+    // Populate service provider filter dropdown with unique companies from API
+    const uniqueCompanies = [
+      ...new Set(
+        restaurants.map((r) => r.company).filter((company) => company)
+      ),
+    ];
+    const serviceProviderSelect = document.getElementById("serviceprovider");
+    // Clear existing options except "Kaikki"
+    serviceProviderSelect.innerHTML = '<option value="all">Kaikki</option>';
+    // Add company options
+    uniqueCompanies.forEach((company) => {
+      const option = document.createElement("option");
+      option.value = company;
+      option.textContent = company;
+      serviceProviderSelect.appendChild(option);
+    });
+
+    // Add event listeners for filter selects
+    citySelect.addEventListener("change", (e) => {
+      filterCity = e.target.value;
+      filterRestaurants();
+    });
+
+    serviceProviderSelect.addEventListener("change", (e) => {
+      filterProvider = e.target.value;
+      filterRestaurants();
+    });
+
+    restaurants.forEach((restaurant) => {
       const restaurantName = restaurant.name;
       const restaurantAddress = restaurant.address;
-
       const restaurantLong = restaurant.location.coordinates[0];
       const restaurantLat = restaurant.location.coordinates[1];
-
       const popupHtml = `<h3>${restaurantName}</h3><p>${restaurantAddress}</p>`;
-      L.marker([restaurantLat, restaurantLong]).addTo(map).bindPopup(popupHtml);
+      const marker = L.marker([restaurantLat, restaurantLong])
+        .addTo(map)
+        .bindPopup(popupHtml);
+      marker.restaurant = restaurant; // Store restaurant data with marker
+      marker.on("click", () => {
+        selectedRestaurant = restaurant;
+        renderRestaurants();
+      });
+      mapMarkers.push(marker);
     });
+    renderRestaurants();
   })
   .catch((err) => {
     modal.innerHTML = `<form method="dialog"><h2>Error</h2><p>${err.message}</p><button>Close</button></form>`;
@@ -212,20 +306,61 @@ async function getWeeklyMenuHtml(restaurantId) {
 
 const container = document.querySelector(".sidebar_restaurants_list");
 
+// Filter restaurants based on selected filters
+function getFilteredRestaurants() {
+  return allRestaurants.filter((restaurant) => {
+    const matchesCity = filterCity === "all" || restaurant.city === filterCity;
+    const matchesProvider =
+      filterProvider === "all" || restaurant.company === filterProvider;
+    return matchesCity && matchesProvider;
+  });
+}
+
+// Filter restaurants and update both sidebar and map
+function filterRestaurants() {
+  selectedRestaurant = null; // Clear marker selection when filtering
+  renderRestaurants();
+  updateMapMarkers();
+}
+
+// Update map markers visibility based on filters
+function updateMapMarkers() {
+  const filteredRestaurants = getFilteredRestaurants();
+  const filteredIds = new Set(filteredRestaurants.map((r) => r._id));
+
+  mapMarkers.forEach((marker) => {
+    if (filteredIds.has(marker.restaurant._id)) {
+      marker.addTo(map);
+    } else {
+      map.removeLayer(marker);
+    }
+  });
+}
+
 // show restaurants in sidebar
 function renderRestaurants() {
   if (!container) return;
   container.innerHTML = "";
+  let restaurantsToShow = selectedRestaurant
+    ? [selectedRestaurant]
+    : getFilteredRestaurants();
 
-  fetchData(RESTAURANTS_ENDPOINT)
-    .then((restaurants) => {
-      restaurants.forEach((r) => {
-        const div = document.createElement("div");
-        div.className = "restaurants_list_restaurant";
+  // Show "no results" message if no restaurants match filters
+  if (restaurantsToShow.length === 0) {
+    container.innerHTML =
+      '<p style="text-align: center; color: #7c7c7c; margin-top: 20px;">Ei tuloksia</p>';
+    return;
+  }
 
-        const providerName = r.company || r.provider || "";
-
-        div.innerHTML = `
+  restaurantsToShow.forEach((r) => {
+    const div = document.createElement("div");
+    div.className = "restaurants_list_restaurant";
+    // If only one restaurant is shown (marker selected), use selected-restaurant class for blue border
+    if (restaurantsToShow.length === 1 && selectedRestaurant) {
+      div.classList.add("selected-restaurant");
+    }
+    const providerName = r.company || r.provider || "";
+    div.innerHTML = `
       <div class="restaurant_title_row">
         <h3>${r.name}</h3>
         <img src="./public/${
@@ -262,23 +397,22 @@ function renderRestaurants() {
         </div>
       </div>
     `;
-
-        // toggle menu
-        const menuDropdown = div.querySelector(".menu_dropdown");
-        menuDropdown.addEventListener("click", () => {
-          openMenu(r);
-        });
-
-        container.appendChild(div);
-      });
-    })
-    .catch((err) => {
-      modal.innerHTML = `<form method="dialog"><h2>Error</h2><p>${err.message}</p><button>Close</button></form>`;
-      modal.showModal();
+    // toggle menu
+    const menuDropdown = div.querySelector(".menu_dropdown");
+    menuDropdown.addEventListener("click", () => {
+      openMenu(r);
     });
+    container.appendChild(div);
+  });
 }
+// Unselect restaurant and show all again
+window.unselectRestaurant = function () {
+  selectedRestaurant = null;
+  renderRestaurants();
+};
 
 async function openMenu(restaurant) {
+  // Close all other open menus except the one for this restaurant
   const divs = document.querySelectorAll(".restaurants_list_restaurant");
   let targetDiv = null;
   divs.forEach((div) => {
@@ -286,22 +420,39 @@ async function openMenu(restaurant) {
     if (name === restaurant.name) targetDiv = div;
   });
   if (!targetDiv) return;
+  // Remove selected class from all cards
+  divs.forEach((div) => div.classList.remove("selected-restaurant"));
 
+  // Remove selected class from all cards
+  divs.forEach((div) => div.classList.remove("selected-restaurant"));
+  // Add selected class to the active card
+  targetDiv.classList.add("selected-restaurant");
+
+  document.querySelectorAll(".restaurant_menu_popup").forEach((popup) => {
+    // If this is the menu for the clicked restaurant, skip for now
+    if (popup.parentElement === targetDiv) return;
+    popup.style.display = "none";
+    const arrow = popup.parentElement.querySelector(".menu_dropdown_arrow");
+    if (arrow) arrow.style.transform = "rotate(0deg)";
+  });
   // Check if menu popup already exists
   let menuContent = targetDiv.querySelector(".restaurant_menu_popup");
   const arrow = targetDiv.querySelector(".menu_dropdown_arrow");
 
   // If menuContent exists, toggle visibility robustly
   if (menuContent) {
-    // If an animation or async operation is in progress, cancel it
     if (menuContent._pending) {
       clearTimeout(menuContent._pending);
       menuContent._pending = null;
     }
-    // Toggle visibility
     const isOpen = menuContent.style.display === "block";
     menuContent.style.display = isOpen ? "none" : "block";
     arrow.style.transform = isOpen ? "rotate(0deg)" : "rotate(180deg)";
+    if (isOpen) {
+      handleCloseMenu(targetDiv);
+    } else {
+      handleOpenMenu(targetDiv);
+    }
     return;
   }
 
@@ -314,6 +465,7 @@ async function openMenu(restaurant) {
 
   // Insert immediately, but fill content after both menus are loaded
   targetDiv.appendChild(menuContent);
+  handleOpenMenu(targetDiv);
 
   // Fetch both menus in parallel
   Promise.all([
@@ -340,11 +492,19 @@ async function openMenu(restaurant) {
       dayBtn.classList.add("selected");
       weekBtn.classList.remove("selected");
       contentArea.innerHTML = dailyHtml;
+      // Scroll restaurant card to top
+      if (targetDiv && targetDiv.scrollIntoView) {
+        targetDiv.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     });
     weekBtn.addEventListener("click", () => {
       weekBtn.classList.add("selected");
       dayBtn.classList.remove("selected");
       contentArea.innerHTML = weeklyHtml;
+      // Scroll restaurant card to top
+      if (targetDiv && targetDiv.scrollIntoView) {
+        targetDiv.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     });
   });
 }
