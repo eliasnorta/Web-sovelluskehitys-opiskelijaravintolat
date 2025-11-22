@@ -13,9 +13,14 @@ filterButton.addEventListener("click", () => {
   document.getElementById("filterDropdown").classList.toggle("show");
 });
 
+const filterDropdown = document.getElementById("filterDropdown");
+
 // Close the dropdown if the user clicks outside of it
 window.onclick = function (event) {
-  if (!event.target.matches(".filter_button")) {
+  if (
+    !event.target.matches(".filter_button") &&
+    !filterDropdown.contains(event.target)
+  ) {
     var dropdowns = document.getElementsByClassName("dropdown-content");
     var i;
     for (i = 0; i < dropdowns.length; i++) {
