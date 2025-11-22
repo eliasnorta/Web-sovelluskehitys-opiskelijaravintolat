@@ -6,6 +6,10 @@ map.on("popupclose", function () {
   window.unselectRestaurant();
 });
 let selectedRestaurant = null;
+let filterCity = "all";
+let filterProvider = "all";
+let mapMarkers = [];
+
 // open filter dropdown
 const filterButton = document.querySelector(".filter_button");
 
@@ -82,6 +86,50 @@ async function fetchData(url, apiKey) {
 fetchData(RESTAURANTS_ENDPOINT)
   .then((restaurants) => {
     allRestaurants = restaurants;
+
+    // Populate city filter dropdown with unique cities from API
+    const uniqueCities = [
+      ...new Set(restaurants.map((r) => r.city).filter((city) => city)),
+    ];
+    const citySelect = document.getElementById("city");
+    // Clear existing options except "Kaikki"
+    citySelect.innerHTML = '<option value="all">Kaikki</option>';
+    // Add city options
+    uniqueCities.forEach((city) => {
+      const option = document.createElement("option");
+      option.value = city;
+      option.textContent = city;
+      citySelect.appendChild(option);
+    });
+
+    // Populate service provider filter dropdown with unique companies from API
+    const uniqueCompanies = [
+      ...new Set(
+        restaurants.map((r) => r.company).filter((company) => company)
+      ),
+    ];
+    const serviceProviderSelect = document.getElementById("serviceprovider");
+    // Clear existing options except "Kaikki"
+    serviceProviderSelect.innerHTML = '<option value="all">Kaikki</option>';
+    // Add company options
+    uniqueCompanies.forEach((company) => {
+      const option = document.createElement("option");
+      option.value = company;
+      option.textContent = company;
+      serviceProviderSelect.appendChild(option);
+    });
+
+    // Add event listeners for filter selects
+    citySelect.addEventListener("change", (e) => {
+      filterCity = e.target.value;
+      filterRestaurants();
+    });
+
+    serviceProviderSelect.addEventListener("change", (e) => {
+      filterProvider = e.target.value;
+      filterRestaurants();
+    });
+
     restaurants.forEach((restaurant) => {
       const restaurantName = restaurant.name;
       const restaurantAddress = restaurant.address;
@@ -91,10 +139,12 @@ fetchData(RESTAURANTS_ENDPOINT)
       const marker = L.marker([restaurantLat, restaurantLong])
         .addTo(map)
         .bindPopup(popupHtml);
+      marker.restaurant = restaurant; // Store restaurant data with marker
       marker.on("click", () => {
         selectedRestaurant = restaurant;
         renderRestaurants();
       });
+      mapMarkers.push(marker);
     });
     renderRestaurants();
   })
@@ -256,14 +306,52 @@ async function getWeeklyMenuHtml(restaurantId) {
 
 const container = document.querySelector(".sidebar_restaurants_list");
 
+// Filter restaurants based on selected filters
+function getFilteredRestaurants() {
+  return allRestaurants.filter((restaurant) => {
+    const matchesCity = filterCity === "all" || restaurant.city === filterCity;
+    const matchesProvider =
+      filterProvider === "all" || restaurant.company === filterProvider;
+    return matchesCity && matchesProvider;
+  });
+}
+
+// Filter restaurants and update both sidebar and map
+function filterRestaurants() {
+  selectedRestaurant = null; // Clear marker selection when filtering
+  renderRestaurants();
+  updateMapMarkers();
+}
+
+// Update map markers visibility based on filters
+function updateMapMarkers() {
+  const filteredRestaurants = getFilteredRestaurants();
+  const filteredIds = new Set(filteredRestaurants.map((r) => r._id));
+
+  mapMarkers.forEach((marker) => {
+    if (filteredIds.has(marker.restaurant._id)) {
+      marker.addTo(map);
+    } else {
+      map.removeLayer(marker);
+    }
+  });
+}
+
 // show restaurants in sidebar
 function renderRestaurants() {
   if (!container) return;
   container.innerHTML = "";
-  let restaurantsToShow = allRestaurants;
-  if (selectedRestaurant) {
-    restaurantsToShow = [selectedRestaurant];
+  let restaurantsToShow = selectedRestaurant
+    ? [selectedRestaurant]
+    : getFilteredRestaurants();
+
+  // Show "no results" message if no restaurants match filters
+  if (restaurantsToShow.length === 0) {
+    container.innerHTML =
+      '<p style="text-align: center; color: #7c7c7c; margin-top: 20px;">Ei tuloksia</p>';
+    return;
   }
+
   restaurantsToShow.forEach((r) => {
     const div = document.createElement("div");
     div.className = "restaurants_list_restaurant";
