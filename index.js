@@ -1083,6 +1083,16 @@ function renderRestaurants() {
     container.appendChild(showAllDiv);
   }
 
+  // Find the closest restaurant when showing multiple restaurants
+  let closestRestaurant = null;
+  if (!selectedRestaurant && restaurantsToShow.length > 1) {
+    closestRestaurant = restaurantsToShow.reduce((closest, current) => {
+      return calculateDistance(current) < calculateDistance(closest)
+        ? current
+        : closest;
+    });
+  }
+
   restaurantsToShow.forEach((r) => {
     const div = document.createElement("div");
     div.className = "restaurants_list_restaurant";
@@ -1090,11 +1100,27 @@ function renderRestaurants() {
     if (restaurantsToShow.length === 1 && selectedRestaurant) {
       div.classList.add("selected-restaurant");
     }
+
+    // Check if this is the closest restaurant
+    const isClosest = closestRestaurant && r._id === closestRestaurant._id;
+
+    // Add blue border and closest restaurant indicator for the closest restaurant
+    if (isClosest) {
+      div.style.border = "2px solid #007acc";
+    }
+
     // Add visual indicator that restaurant cards are clickable
     div.style.cursor = "pointer";
     const providerName = r.company || r.provider || "";
     const isFavorited = isRestaurantFavorited(r._id);
+
+    // Add closest restaurant text if this is the closest one
+    const closestText = isClosest
+      ? '<div style="color: #007acc; font-weight: bold; margin-bottom: 8px; font-size: 14px;">Lähin ravintolasi!</div>'
+      : "";
+
     div.innerHTML = `
+      ${closestText}
       <div class="restaurant_title_row">
         <h3>${r.name}</h3>
         <button class="restaurant_star" data-favorite-restaurant data-restaurant-id="${
