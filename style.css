@@ -85,7 +85,7 @@ body {
   height: 100%;
   border: 1px solid var(--border-color);
   border-radius: 10px;
-  padding: 0px 10px;
+  padding-left: 15px;
 
   background-image: url(/public/search-icon.svg);
   background-size: 17px auto;
@@ -105,7 +105,7 @@ body {
 }
 
 .sidebar_search input::placeholder {
-  text-indent: 24px;
+  text-indent: 20px;
 }
 
 .sidebar_sort .filter_button,

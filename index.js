@@ -19,6 +19,7 @@ let sortBy = "location_asc";
 let mapMarkers = [];
 let userLocation = { lat: 60.1699, lng: 24.9384 }; // Default to Helsinki center
 let showFavoritesOnly = false;
+let searchQuery = "";
 
 // open filter dropdown
 const filterButton = document.querySelector(".filter_button");
@@ -165,6 +166,17 @@ fetchData(RESTAURANTS_ENDPOINT)
         }
       });
     });
+
+    // Add event listener for search input
+    const searchInput = document.querySelector(
+      '.sidebar_search input[type="text"]'
+    );
+    if (searchInput) {
+      searchInput.addEventListener("input", (e) => {
+        searchQuery = e.target.value.trim().toLowerCase();
+        filterRestaurants();
+      });
+    }
 
     restaurants.forEach((restaurant) => {
       const restaurantName = restaurant.name;
@@ -970,8 +982,10 @@ function getFilteredRestaurants() {
       filterProvider === "all" || restaurant.company === filterProvider;
     const matchesFavorites =
       !showFavoritesOnly || isRestaurantFavorited(restaurant._id);
+    const matchesSearch =
+      searchQuery === "" || restaurant.name.toLowerCase().includes(searchQuery);
 
-    return matchesCity && matchesProvider && matchesFavorites;
+    return matchesCity && matchesProvider && matchesFavorites && matchesSearch;
   });
 
   return sortRestaurants(filtered);
