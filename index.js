@@ -241,13 +241,107 @@ if (!localStorage.getItem("testUser")) {
   createTestUser();
 }
 
+// Update sidebar profile picture on page load
+window.addEventListener("DOMContentLoaded", () => {
+  updateSidebarProfilePicture();
+});
+
 // Modal elements
 const profileModal = document.querySelector("#profile_modal");
 const loginModal = document.querySelector("#login_modal");
 const registerModal = document.getElementById("register_modal");
 
+// Profile picture upload functionality
+const uploadProfileBtn = profileModal.querySelector("[data-upload-profile]");
+const deleteProfileBtn = profileModal.querySelector("[data-delete-profile]");
+const profilePictureDiv = profileModal.querySelector(".profile_picture");
+// Create a hidden file input for image upload
+const fileInput = document.createElement("input");
+fileInput.type = "file";
+fileInput.accept = "image/*";
+fileInput.style.display = "none";
+document.body.appendChild(fileInput);
+
+uploadProfileBtn.addEventListener("click", () => {
+  fileInput.click();
+});
+
+// Delete profile picture functionality
+deleteProfileBtn.addEventListener("click", () => {
+  // Remove from currentUser
+  let user = JSON.parse(localStorage.getItem("currentUser"));
+  if (user && user.profilePicture) {
+    delete user.profilePicture;
+    localStorage.setItem("currentUser", JSON.stringify(user));
+  }
+
+  // Remove from testUser so it stays deleted after logout/login
+  let testUser = JSON.parse(localStorage.getItem("testUser"));
+  if (testUser && testUser.profilePicture) {
+    delete testUser.profilePicture;
+    localStorage.setItem("testUser", JSON.stringify(testUser));
+  }
+
+  // Clear profile picture from modal
+  if (profilePictureDiv) {
+    profilePictureDiv.style.backgroundImage = "";
+  }
+
+  // Update sidebar profile button to show default icon
+  updateSidebarProfilePicture();
+});
+
+fileInput.addEventListener("change", (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const base64Image = e.target.result;
+    // Save image to currentUser in localStorage
+    let user = JSON.parse(localStorage.getItem("currentUser"));
+    if (user) {
+      user.profilePicture = base64Image;
+      localStorage.setItem("currentUser", JSON.stringify(user));
+
+      // Also save to testUser so profile picture persists after logout
+      let testUser = JSON.parse(localStorage.getItem("testUser"));
+      if (testUser) {
+        testUser.profilePicture = base64Image;
+        localStorage.setItem("testUser", JSON.stringify(testUser));
+      }
+
+      // Show image in profile modal
+      if (profilePictureDiv) {
+        profilePictureDiv.style.backgroundImage = `url('${base64Image}')`;
+        profilePictureDiv.style.backgroundSize = "cover";
+        profilePictureDiv.style.backgroundPosition = "center";
+      }
+      // Update sidebar profile button
+      updateSidebarProfilePicture();
+    }
+  };
+  reader.readAsDataURL(file);
+});
+
 const profileButton = document.querySelector("[data-open-profile]");
 const profileCloseButtons = document.querySelectorAll("[data-close-modal]");
+
+// Function to update sidebar profile picture
+function updateSidebarProfilePicture() {
+  const user = JSON.parse(localStorage.getItem("currentUser"));
+  const profileButtonImg = profileButton.querySelector("img");
+  if (user && user.profilePicture && profileButtonImg) {
+    // Hide the default profile icon and set background image
+    profileButtonImg.style.display = "none";
+    profileButton.style.backgroundImage = `url('${user.profilePicture}')`;
+    profileButton.style.backgroundSize = "cover";
+    profileButton.style.backgroundPosition = "center";
+  } else if (profileButtonImg) {
+    // Show default profile icon
+    profileButtonImg.style.display = "inline";
+    profileButton.style.backgroundImage = "";
+  }
+}
 
 // Profile button click handler
 profileButton.addEventListener("click", () => {
@@ -267,6 +361,16 @@ profileButton.addEventListener("click", () => {
       if (usernameInput) usernameInput.value = user.username || "";
       if (firstNameInput) firstNameInput.value = user.firstName || "";
       if (lastNameInput) lastNameInput.value = user.lastName || "";
+      // Show profile picture if exists
+      if (profilePictureDiv) {
+        if (user.profilePicture) {
+          profilePictureDiv.style.backgroundImage = `url('${user.profilePicture}')`;
+          profilePictureDiv.style.backgroundSize = "cover";
+          profilePictureDiv.style.backgroundPosition = "center";
+        } else {
+          profilePictureDiv.style.backgroundImage = "";
+        }
+      }
     }
     profileModal.showModal();
   } else {
@@ -296,6 +400,8 @@ if (openRegisterModalBtn && registerModal) {
 const signOutButton = profileModal.querySelector("[data-sign-out]");
 signOutButton.addEventListener("click", () => {
   localStorage.removeItem("currentUser");
+  // Reset sidebar profile picture to default
+  updateSidebarProfilePicture();
   profileModal.close();
 });
 
@@ -316,6 +422,8 @@ if (loginForm) {
         if (user.username === username && user.password === password) {
           // Successful login: set currentUser
           localStorage.setItem("currentUser", JSON.stringify(user));
+          // Update sidebar profile picture
+          updateSidebarProfilePicture();
           loginModal.close();
           profileModal.showModal();
         } else {
