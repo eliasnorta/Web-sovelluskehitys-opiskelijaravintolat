@@ -18,6 +18,7 @@ let filterProvider = "all";
 let sortBy = "location_asc";
 let mapMarkers = [];
 let userLocation = { lat: 60.1699, lng: 24.9384 }; // Default to Helsinki center
+let showFavoritesOnly = false;
 
 // open filter dropdown
 const filterButton = document.querySelector(".filter_button");
@@ -232,6 +233,60 @@ function isUsernameAlreadyTaken(username, excludeUsername = null) {
   );
 }
 
+// Get user's favorite restaurants
+function getUserFavorites() {
+  const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+  return currentUser?.favoriteRestaurants || [];
+}
+
+// Toggle restaurant favorite status
+function toggleRestaurantFavorite(restaurantId) {
+  if (!isUserLoggedIn()) {
+    alert("Kirjaudu sisään lisätäksesi ravintoloita suosikkeihin");
+    return;
+  }
+
+  const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+  if (!currentUser.favoriteRestaurants) {
+    currentUser.favoriteRestaurants = [];
+  }
+
+  const favoriteIndex = currentUser.favoriteRestaurants.indexOf(restaurantId);
+  if (favoriteIndex > -1) {
+    // Remove from favorites
+    currentUser.favoriteRestaurants.splice(favoriteIndex, 1);
+  } else {
+    // Add to favorites
+    currentUser.favoriteRestaurants.push(restaurantId);
+  }
+
+  // Update currentUser
+  localStorage.setItem("currentUser", JSON.stringify(currentUser));
+
+  // Update in users array
+  const users = JSON.parse(localStorage.getItem("users")) || [];
+  const userIndex = users.findIndex((u) => u.username === currentUser.username);
+  if (userIndex !== -1) {
+    users[userIndex] = currentUser;
+    localStorage.setItem("users", JSON.stringify(users));
+  }
+
+  // Update testUser for compatibility
+  const testUser = JSON.parse(localStorage.getItem("testUser"));
+  if (testUser && testUser.username === currentUser.username) {
+    localStorage.setItem("testUser", JSON.stringify(currentUser));
+  }
+
+  // Re-render restaurants to update star icons
+  renderRestaurants();
+}
+
+// Check if restaurant is favorited by current user
+function isRestaurantFavorited(restaurantId) {
+  const favorites = getUserFavorites();
+  return favorites.includes(restaurantId);
+}
+
 // Store a test user in localStorage
 function createTestUser() {
   const testUser = {
@@ -258,6 +313,31 @@ if (!localStorage.getItem("testUser")) {
 // Update sidebar profile picture on page load
 window.addEventListener("DOMContentLoaded", () => {
   updateSidebarProfilePicture();
+});
+
+// Show starred restaurants button functionality
+const showStarredButton = document.querySelector("[data-show-starred]");
+showStarredButton.addEventListener("click", () => {
+  if (!isUserLoggedIn()) {
+    alert("Kirjaudu sisään nähdäksesi suosikkiravintolasi");
+    return;
+  }
+
+  showFavoritesOnly = !showFavoritesOnly;
+  selectedRestaurant = null; // Clear selection when switching views
+
+  // Update button appearance
+  const starImg = showStarredButton.querySelector("img");
+  if (showFavoritesOnly) {
+    starImg.src = "./public/star-selected.svg";
+    showStarredButton.style.backgroundColor = "#e6f3ff";
+  } else {
+    starImg.src = "./public/star-selected.svg";
+    showStarredButton.style.backgroundColor = "";
+  }
+
+  renderRestaurants();
+  updateMapMarkers();
 });
 
 // Modal elements
@@ -560,8 +640,26 @@ if (registerForm) {
 const signOutButton = profileModal.querySelector("[data-sign-out]");
 signOutButton.addEventListener("click", () => {
   localStorage.removeItem("currentUser");
+
+  // Reset starred restaurants view when signing out
+  showFavoritesOnly = false;
+  selectedRestaurant = null;
+
+  // Reset show starred button appearance
+  const showStarredButton = document.querySelector("[data-show-starred]");
+  if (showStarredButton) {
+    const starImg = showStarredButton.querySelector("img");
+    if (starImg) starImg.src = "./public/star-selected.svg";
+    showStarredButton.style.backgroundColor = "";
+  }
+
   // Reset sidebar profile picture to default
   updateSidebarProfilePicture();
+
+  // Re-render restaurants to show all restaurants
+  renderRestaurants();
+  updateMapMarkers();
+
   profileModal.close();
 });
 
@@ -870,7 +968,10 @@ function getFilteredRestaurants() {
     const matchesCity = filterCity === "all" || restaurant.city === filterCity;
     const matchesProvider =
       filterProvider === "all" || restaurant.company === filterProvider;
-    return matchesCity && matchesProvider;
+    const matchesFavorites =
+      !showFavoritesOnly || isRestaurantFavorited(restaurant._id);
+
+    return matchesCity && matchesProvider && matchesFavorites;
   });
 
   return sortRestaurants(filtered);
@@ -909,6 +1010,8 @@ function getDistance(lat1, lon1, lat2, lon2) {
 // Filter restaurants and update both sidebar and map
 function filterRestaurants() {
   selectedRestaurant = null; // Clear marker selection when filtering
+  // Don't reset showFavoritesOnly - keep the current view (starred or all)
+
   renderRestaurants();
   updateMapMarkers();
 }
@@ -990,12 +1093,13 @@ function renderRestaurants() {
     // Add visual indicator that restaurant cards are clickable
     div.style.cursor = "pointer";
     const providerName = r.company || r.provider || "";
+    const isFavorited = isRestaurantFavorited(r._id);
     div.innerHTML = `
       <div class="restaurant_title_row">
         <h3>${r.name}</h3>
-        <button data-favorite-restaurant>
+        <button data-favorite-restaurant data-restaurant-id="${r._id}">
           <img src="./public/${
-            r.starred ? "star-selected.svg" : "star-unselected.svg"
+            isFavorited ? "star-selected.svg" : "star-unselected.svg"
           }" alt="like" />
         </button>
       </div>
@@ -1048,6 +1152,15 @@ function renderRestaurants() {
       event.stopPropagation(); // Prevent triggering restaurant selection
       openMenu(r);
     });
+
+    // favorite restaurant functionality
+    const favoriteButton = div.querySelector("[data-favorite-restaurant]");
+    favoriteButton.addEventListener("click", (event) => {
+      event.stopPropagation(); // Prevent triggering restaurant selection
+      const restaurantId = favoriteButton.getAttribute("data-restaurant-id");
+      toggleRestaurantFavorite(restaurantId);
+    });
+
     container.appendChild(div);
   });
 }
