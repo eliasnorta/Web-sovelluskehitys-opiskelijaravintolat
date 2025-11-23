@@ -39,17 +39,81 @@
           </div>
         </div>
         <div class="sidebar_sort">
-          <button class="sort_button">
-            <img src="./public/sort-icon.svg" alt="sort-icon" />
-            <p>Sort by</p>
-          </button>
+          <div class="sort_by_dropdown">
+            <button class="sort_button">
+              <img src="./public/sort-icon.svg" alt="sort-icon" />
+              <p>Sort by</p>
+            </button>
+            <!-- sort by dropdown menu -->
+            <div id="sort_by_dropdown" class="dropdown-content">
+              <div class="dropdown_wrapper">
+                <h2>Sort by</h2>
+                <fieldset>
+                  <legend><small>Sijainti</small></legend>
+                  <div class="dropdown_input_container">
+                    <input
+                      type="radio"
+                      id="location_asc"
+                      name="sort"
+                      value="location_asc"
+                      checked
+                    />
+                    <label for="location_asc"
+                      ><img
+                        src="/public/sort-location-ascending-icon.svg"
+                        alt="sort-location-ascending-icon"
+                      />
+                      Near ascending</label
+                    >
+                  </div>
+                  <div class="dropdown_input_container">
+                    <input
+                      type="radio"
+                      id="location_desc"
+                      name="sort"
+                      value="location_desc"
+                    />
+                    <label for="location_desc"
+                      ><img
+                        src="/public/sort-location-descending-icon.svg"
+                        alt="sort-location-descending-icon"
+                      />Near descending</label
+                    >
+                  </div>
+                </fieldset>
+                <hr />
+                <fieldset>
+                  <legend><small>Nimi</small></legend>
+                  <div class="dropdown_input_container">
+                    <input
+                      type="radio"
+                      id="name_asc"
+                      name="sort"
+                      value="name_asc"
+                    />
+                    <label for="name_asc"> A-Z</label>
+                  </div>
+                  <div class="dropdown_input_container">
+                    <input
+                      type="radio"
+                      id="name_desc"
+                      name="sort"
+                      value="name_desc"
+                    />
+                    <label for="name_desc">Z-A</label>
+                  </div>
+                </fieldset>
+              </div>
+            </div>
+          </div>
+
           <div class="filter_dropdown">
             <button class="filter_button">
               <img src="./public/filter-icon.svg" alt="filter-icon" />
               <p>Filter</p>
             </button>
             <!-- filter dropdown menu -->
-            <div id="filterDropdown" class="dropdown-content">
+            <div id="filter_dropdown" class="dropdown-content">
               <div class="dropdown_wrapper">
                 <h2>Filter by</h2>
                 <div class="dropdown_select_area">
