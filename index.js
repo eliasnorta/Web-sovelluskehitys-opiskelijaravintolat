@@ -1,13 +1,17 @@
+// stores all restaurants fetched from API
 let allRestaurants = [];
 
+// set default view to Helsinki
 var map = L.map("map").setView([60.1699, 24.9384], 13);
 // Reset sidebar when any marker popup is closed
 let isUpdatingMarkers = false; // Prevent infinite loop
+
 map.on("popupclose", function () {
   if (!isUpdatingMarkers) {
     window.unselectRestaurant();
   }
 });
+
 let selectedRestaurant = null;
 let filterCity = "all";
 let filterProvider = "all";
@@ -180,8 +184,8 @@ fetchData(RESTAURANTS_ENDPOINT)
     renderRestaurants();
   })
   .catch((err) => {
-    modal.innerHTML = `<form method="dialog"><h2>Error</h2><p>${err.message}</p><button>Close</button></form>`;
-    modal.showModal();
+    profileModal.innerHTML = `<form method="dialog"><h2>Error</h2><p>${err.message}</p><button>Close</button></form>`;
+    profileModal.showModal();
   });
 
 // get user's location and display restaurants on map
@@ -215,21 +219,38 @@ navigator.geolocation.getCurrentPosition(function (pos) {
   renderRestaurants();
 });
 
-// modal
-const modal = document.querySelector("dialog");
+// Simple authentication check function
+function isUserLoggedIn() {
+  return localStorage.getItem("currentUser") !== null;
+}
 
+// Modal elements
+const profileModal = document.querySelector("#profile_modal");
+const loginModal = document.querySelector("#login_modal");
 const profileButton = document.querySelector("[data-open-profile]");
-const profileCloseButton = document.querySelector("[data-close-modal]");
+const profileCloseButtons = document.querySelectorAll("[data-close-modal]");
 
+// Profile button click handler
 profileButton.addEventListener("click", () => {
-  modal.showModal();
+  if (isUserLoggedIn()) {
+    // User is logged in, show profile modal
+    profileModal.showModal();
+  } else {
+    // User is not logged in, show login modal
+    loginModal.showModal();
+  }
 });
 
-profileCloseButton.addEventListener("click", () => {
-  modal.close();
+// Close modal buttons
+profileCloseButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    profileModal.close();
+    loginModal.close();
+  });
 });
 
 // modal.showModal();
+// loginModal.showModal();
 
 // resize sidebar
 const sidebar = document.getElementById("sidebar");

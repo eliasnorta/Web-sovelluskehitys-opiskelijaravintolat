@@ -116,7 +116,7 @@
             <div id="filter_dropdown" class="dropdown-content">
               <div class="dropdown_wrapper">
                 <h2>Filter by</h2>
-                <div class="dropdown_select_area">
+                <div class="dropdown_select_area form_element">
                   <label for="city"><small>Kaupunki</small></label>
                   <select id="city" name="filter"></select>
                 </div>
@@ -139,7 +139,8 @@
       </section>
     </div>
 
-    <dialog>
+    <!-- profile dialog -->
+    <dialog id="profile_modal">
       <button data-close-modal>&times;</button>
       <h1 class="profile_title">Profiili</h1>
       <div class="profile_basic_info_row profile_section">
@@ -159,7 +160,7 @@
         </div>
 
         <div class="profile_basic_info">
-          <div>
+          <div class="">
             <label for="username">Username</label>
             <input type="text" name="username" placeholder="Username" id="" />
           </div>
@@ -200,6 +201,66 @@
         </div>
         <div>
           <button data-save-changes>Tallenna tiedot</button>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- register modal -->
+    <dialog id="register_modal">
+      <button data-close-modal>&times;</button>
+      <h1>Luo Käyttäjä</h1>
+      <div>
+        <label for="first-name">Etunimi</label>
+        <input type="text" name="first-name" placeholder="John" id="" />
+      </div>
+      <div>
+        <label for="last-name">Sukunimi</label>
+        <input type="text" name="last-name" placeholder="Smith" id="" />
+      </div>
+      <div class="change_passwords_inputs">
+        <div>
+          <label for="old-password">Vanha salasana<span>*</span></label>
+          <input type="password" name="old-password" id="" />
+        </div>
+        <div>
+          <label for="new-password">Uusi<span>*</span></label>
+          <input type="password" name="new-password" id="" />
+        </div>
+        <div>
+          <label for="new-password-again">Uusi uudestaan<span>*</span></label>
+          <input type="password" name="new-password-again" id="" />
+        </div>
+      </div>
+    </dialog>
+
+    <!-- Login modal -->
+    <dialog id="login_modal">
+      <div class="login_modal_wrapper">
+        <button data-close-modal>&times;</button>
+        <h1>Kirjaudu</h1>
+        <div class="login_inputs">
+          <div class="form_element">
+            <label for="first-name"><small>Käyttäjänimi</small></label>
+            <input type="text" name="first-name" placeholder="John" id="" />
+          </div>
+          <div class="form_element">
+            <label for="old-password"><small>Salasana</small></label>
+            <input
+              type="password"
+              name="old-password"
+              placeholder="********"
+              id=""
+            />
+          </div>
+          <div class="modal_submit">
+            <input type="submit" value="Kirjaudu" />
+          </div>
+        </div>
+        <div class="create_acc_footer">
+          <small>
+            Ei vielä tiliä?
+            <button id="open_register_modal">Luo käyttäjä</button>
+          </small>
         </div>
       </div>
     </dialog>
