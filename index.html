@@ -207,28 +207,43 @@
 
     <!-- register modal -->
     <dialog id="register_modal">
-      <button data-close-modal>&times;</button>
-      <h1>Luo Käyttäjä</h1>
-      <div>
-        <label for="first-name">Etunimi</label>
-        <input type="text" name="first-name" placeholder="John" id="" />
-      </div>
-      <div>
-        <label for="last-name">Sukunimi</label>
-        <input type="text" name="last-name" placeholder="Smith" id="" />
-      </div>
-      <div class="change_passwords_inputs">
-        <div>
-          <label for="old-password">Vanha salasana<span>*</span></label>
-          <input type="password" name="old-password" id="" />
+      <div class="register_modal_wrapper">
+        <button data-close-modal>&times;</button>
+        <h1>Luo Käyttäjä</h1>
+
+        <div class="register_form_name_elements">
+          <div class="form_element">
+            <label for="first-name"><small>Etunimi</small></label>
+            <input type="text" name="first-name" placeholder="John" id="" />
+          </div>
+          <div class="form_element">
+            <label for="last-name"><small>Sukunimi</small></label>
+            <input type="text" name="last-name" placeholder="Smith" id="" />
+          </div>
         </div>
-        <div>
-          <label for="new-password">Uusi<span>*</span></label>
-          <input type="password" name="new-password" id="" />
+
+        <div class="register_form_username_password_elements">
+          <div>
+            <label for="create-username"
+              ><small>Käyttäjänimi</small><span>*</span></label
+            >
+            <input type="text" name="create-username" id="" />
+          </div>
+          <div>
+            <label for="create-password"
+              ><small>Luo salasana</small><span>*</span></label
+            >
+            <input type="password" name="create-password" id="" />
+          </div>
+          <div>
+            <label for="create-password-again"
+              ><small>Salasana uudestaan</small><span>*</span></label
+            >
+            <input type="password" name="create-password-again" id="" />
+          </div>
         </div>
-        <div>
-          <label for="new-password-again">Uusi uudestaan<span>*</span></label>
-          <input type="password" name="new-password-again" id="" />
+        <div class="modal_submit register_submit">
+          <input type="submit" value="Luo käyttäjä" />
         </div>
       </div>
     </dialog>
@@ -248,7 +263,7 @@
             <input
               type="password"
               name="old-password"
-              placeholder="********"
+              placeholder="**************"
               id=""
             />
           </div>

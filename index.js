@@ -227,6 +227,8 @@ function isUserLoggedIn() {
 // Modal elements
 const profileModal = document.querySelector("#profile_modal");
 const loginModal = document.querySelector("#login_modal");
+const registerModal = document.getElementById("register_modal");
+
 const profileButton = document.querySelector("[data-open-profile]");
 const profileCloseButtons = document.querySelectorAll("[data-close-modal]");
 
@@ -246,8 +248,17 @@ profileCloseButtons.forEach((button) => {
   button.addEventListener("click", () => {
     profileModal.close();
     loginModal.close();
+    registerModal.close();
   });
 });
+// Add event listener for register modal button
+const openRegisterModalBtn = document.getElementById("open_register_modal");
+if (openRegisterModalBtn && registerModal) {
+  openRegisterModalBtn.addEventListener("click", () => {
+    loginModal.close();
+    registerModal.showModal();
+  });
+}
 
 // modal.showModal();
 // loginModal.showModal();

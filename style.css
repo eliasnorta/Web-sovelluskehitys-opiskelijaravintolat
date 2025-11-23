@@ -609,6 +609,7 @@ dialog input {
   display: flex;
   flex-direction: column;
   gap: 15px;
+  width: 250px;
 }
 
 #login_modal h1 {
@@ -673,4 +674,47 @@ dialog input {
 
 .create_acc_footer button:hover {
   text-decoration: underline;
+}
+
+/* register modal */
+#register_modal {
+  padding: 30px 30px;
+}
+
+.register_modal_wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.register_modal_wrapper h1 {
+  text-align: center;
+  font-weight: 400;
+  margin-bottom: 35px;
+}
+
+.register_form_name_elements {
+  display: flex;
+  gap: 10px;
+}
+
+.register_form_username_password_elements {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.register_form_username_password_elements > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.register_form_username_password_elements span {
+  color: var(--color-warning);
+}
+
+.register_submit {
+  display: flex;
+  justify-content: right;
 }
