@@ -2,7 +2,17 @@
 let allRestaurants = [];
 
 // set default view to Helsinki
-var map = L.map("map").setView([60.1699, 24.9384], 13);
+var map = L.map("map", {
+  zoomControl: false, // Disable default zoom control
+}).setView([60.1699, 24.9384], 13);
+
+// Add zoom control in a different position
+// Options: 'topleft', 'topright', 'bottomleft', 'bottomright'
+L.control
+  .zoom({
+    position: "bottomright", // Change this to your desired position
+  })
+  .addTo(map);
 // Reset sidebar when any marker popup is closed
 let isUpdatingMarkers = false; // Prevent infinite loop
 
@@ -283,12 +293,6 @@ function toggleRestaurantFavorite(restaurantId) {
     localStorage.setItem("users", JSON.stringify(users));
   }
 
-  // Update testUser for compatibility
-  const testUser = JSON.parse(localStorage.getItem("testUser"));
-  if (testUser && testUser.username === currentUser.username) {
-    localStorage.setItem("testUser", JSON.stringify(currentUser));
-  }
-
   // Re-render restaurants to update star icons
   renderRestaurants();
 }
@@ -299,27 +303,9 @@ function isRestaurantFavorited(restaurantId) {
   return favorites.includes(restaurantId);
 }
 
-// Store a test user in localStorage
-function createTestUser() {
-  const testUser = {
-    firstName: "John",
-    lastName: "Smith",
-    username: "jsmith",
-    password: "123456",
-  };
-  // Store in localStorage under 'testUser' key
-  localStorage.setItem("testUser", JSON.stringify(testUser));
-
-  // Initialize users array if it doesn't exist
-  if (!localStorage.getItem("users")) {
-    const users = [testUser];
-    localStorage.setItem("users", JSON.stringify(users));
-  }
-}
-
-// Create the test user if not present
-if (!localStorage.getItem("testUser")) {
-  createTestUser();
+// Initialize empty users array if it doesn't exist
+if (!localStorage.getItem("users")) {
+  localStorage.setItem("users", JSON.stringify([]));
 }
 
 // Update sidebar profile picture on page load
@@ -381,13 +367,6 @@ deleteProfileBtn.addEventListener("click", () => {
     localStorage.setItem("currentUser", JSON.stringify(user));
   }
 
-  // Remove from testUser so it stays deleted after logout/login
-  let testUser = JSON.parse(localStorage.getItem("testUser"));
-  if (testUser && testUser.profilePicture) {
-    delete testUser.profilePicture;
-    localStorage.setItem("testUser", JSON.stringify(testUser));
-  }
-
   // Remove from users array
   if (user) {
     const users = JSON.parse(localStorage.getItem("users")) || [];
@@ -428,13 +407,6 @@ fileInput.addEventListener("change", (event) => {
     if (user) {
       user.profilePicture = base64Image;
       localStorage.setItem("currentUser", JSON.stringify(user));
-
-      // Also save to testUser so profile picture persists after logout
-      let testUser = JSON.parse(localStorage.getItem("testUser"));
-      if (testUser) {
-        testUser.profilePicture = base64Image;
-        localStorage.setItem("testUser", JSON.stringify(testUser));
-      }
 
       // Update in users array
       const users = JSON.parse(localStorage.getItem("users")) || [];
@@ -595,9 +567,6 @@ if (registerForm) {
       const users = JSON.parse(localStorage.getItem("users")) || [];
       users.push(newUser);
       localStorage.setItem("users", JSON.stringify(users));
-
-      // Save as testUser (set as current active user for login compatibility)
-      localStorage.setItem("testUser", JSON.stringify(newUser));
 
       // Automatically sign in the new user
       localStorage.setItem("currentUser", JSON.stringify(newUser));
@@ -773,12 +742,6 @@ saveChangesButton.addEventListener("click", (e) => {
   // Update currentUser
   localStorage.setItem("currentUser", JSON.stringify(updatedUser));
 
-  // Update testUser for compatibility if it matches current user
-  const testUser = JSON.parse(localStorage.getItem("testUser"));
-  if (testUser && testUser.username === currentUser.username) {
-    localStorage.setItem("testUser", JSON.stringify(updatedUser));
-  }
-
   // Clear password fields
   oldPasswordInput.value = "";
   newPasswordInput.value = "";
@@ -808,9 +771,8 @@ if (loginForm) {
           (u) => u.username === username && u.password === password
         );
         if (user) {
-          // Successful login: set currentUser and testUser for compatibility
+          // Successful login: set currentUser
           localStorage.setItem("currentUser", JSON.stringify(user));
-          localStorage.setItem("testUser", JSON.stringify(user));
           // Update sidebar profile picture
           updateSidebarProfilePicture();
           loginModal.close();

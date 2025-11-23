@@ -22,6 +22,12 @@ body {
   display: flex;
 }
 
+/* leaflet map */
+#map {
+  height: 100vh;
+  width: 100vw;
+}
+
 /* sidebar */
 
 #sidebar {
@@ -87,7 +93,7 @@ body {
   border-radius: 10px;
   padding-left: 15px;
 
-  background-image: url(/public/search-icon.svg);
+  background-image: url(./public/search-icon.svg);
   background-size: 17px auto;
   background-position: 10px 9px;
 
@@ -730,6 +736,7 @@ dialog input {
   text-align: center;
   font-weight: 400;
   margin-bottom: 35px;
+  white-space: nowrap;
 }
 
 .register_form_name_elements {
@@ -756,4 +763,106 @@ dialog input {
 .register_submit {
   display: flex;
   justify-content: right;
+}
+
+#mobile_navbar {
+  display: none;
+}
+
+@media (max-width: 1341px) {
+  .filter-dropdown-content {
+    left: -72%;
+  }
+}
+
+/* mobile responsive */
+@media (max-width: 600px) {
+  * {
+    /* background-color: red; */
+  }
+
+  #sidebar {
+    position: inherit;
+    max-width: 100vw;
+    width: 100vw;
+    margin-top: 55vh;
+    padding: 0px 20px 0px 20px;
+  }
+
+  #sidebar-resize-handle {
+    display: none;
+  }
+
+  #mobile_navbar {
+    display: flex;
+    position: absolute;
+    top: 0;
+    /* left: 0; */
+    z-index: 9999999999;
+    /* margin-left: 20px; */
+    top: 15px;
+    width: 100%;
+  }
+
+  .mobile_navbar_container {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin: 0px 15px;
+  }
+
+  .sidebar_profile_desktop {
+    display: none;
+  }
+  .sidebar_starred_desktop {
+    display: none;
+  }
+
+  .profile_basic_info_row {
+    flex-direction: column;
+  }
+
+  .top_row_profile_picture {
+    width: 100%;
+  }
+
+  .profile_basic_info {
+    width: 100%;
+  }
+
+  .register_form_name_elements {
+    flex-direction: column;
+  }
+
+  .register_modal_wrapper {
+    width: 79vw;
+  }
+
+  .register_modal_wrapper h1 {
+    margin-bottom: 10px;
+  }
+  #register_modal {
+    padding: 20px 20px;
+  }
+
+  .map_section {
+    height: 55vh;
+  }
+
+  #map {
+    height: 55vh;
+  }
+
+  input {
+    font-size: 16px; /* Prevents mobile zoom on focus */
+  }
+
+  .service_provider_logo img {
+    width: 100%;
+    height: 30px;
+  }
+
+  .filter-dropdown-content {
+    /* left: -60%; */
+  }
 }

@@ -25,14 +25,29 @@
 
   <body>
     <div class="content_wrapper">
-      <section id="sidebar">
-        <div class="sidebar_top">
+      <section id="mobile_navbar">
+        <div class="mobile_navbar_container">
           <div class="sidebar_profile_container">
             <button data-open-profile class="sidebar_round_button">
               <img src="./public/profile.svg" alt="profile" />
             </button>
           </div>
           <div class="sidebar_starred_container">
+            <button class="sidebar_round_button" data-show-starred>
+              <img src="./public/star-selected.svg" alt="starred" />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="sidebar">
+        <div class="sidebar_top">
+          <div class="sidebar_profile_container sidebar_profile_desktop">
+            <button data-open-profile class="sidebar_round_button">
+              <img src="./public/profile.svg" alt="profile" />
+            </button>
+          </div>
+          <div class="sidebar_starred_container sidebar_starred_desktop">
             <button class="sidebar_round_button" data-show-starred>
               <img src="./public/star-selected.svg" alt="starred" />
             </button>
@@ -63,7 +78,7 @@
                     />
                     <label for="location_asc"
                       ><img
-                        src="/public/sort-location-ascending-icon.svg"
+                        src="./public/sort-location-ascending-icon.svg"
                         alt="sort-location-ascending-icon"
                       />
                       Near ascending</label
@@ -78,7 +93,7 @@
                     />
                     <label for="location_desc"
                       ><img
-                        src="/public/sort-location-descending-icon.svg"
+                        src="./public/sort-location-descending-icon.svg"
                         alt="sort-location-descending-icon"
                       />Near descending</label
                     >
@@ -116,7 +131,10 @@
               <p>Filter</p>
             </button>
             <!-- filter dropdown menu -->
-            <div id="filter_dropdown" class="dropdown-content">
+            <div
+              id="filter_dropdown"
+              class="dropdown-content filter-dropdown-content"
+            >
               <div class="dropdown_wrapper">
                 <h2>Filter by</h2>
                 <div class="dropdown_select_area">
@@ -138,7 +156,7 @@
       </section>
 
       <section class="map_section">
-        <div id="map" style="height: 100vh; width: 100vw"></div>
+        <div id="map"></div>
       </section>
     </div>
 
