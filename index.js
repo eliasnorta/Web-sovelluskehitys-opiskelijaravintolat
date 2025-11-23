@@ -315,27 +315,32 @@ window.addEventListener("DOMContentLoaded", () => {
 
 // Show starred restaurants button functionality
 const showStarredButton = document.querySelector("[data-show-starred]");
-showStarredButton.addEventListener("click", () => {
-  if (!isUserLoggedIn()) {
-    alert("Kirjaudu sisään nähdäksesi suosikkiravintolasi");
-    return;
-  }
+const showStarredButtons = document.querySelectorAll("[data-show-starred]");
+showStarredButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    if (!isUserLoggedIn()) {
+      alert("Kirjaudu sisään nähdäksesi suosikkiravintolasi");
+      return;
+    }
 
-  showFavoritesOnly = !showFavoritesOnly;
-  selectedRestaurant = null; // Clear selection when switching views
+    showFavoritesOnly = !showFavoritesOnly;
+    selectedRestaurant = null; // Clear selection when switching views
 
-  // Update button appearance
-  const starImg = showStarredButton.querySelector("img");
-  if (showFavoritesOnly) {
-    starImg.src = "./public/star-selected.svg";
-    showStarredButton.style.backgroundColor = "#e6f3ff";
-  } else {
-    starImg.src = "./public/star-selected.svg";
-    showStarredButton.style.backgroundColor = "";
-  }
+    // Update button appearance for all starred buttons
+    showStarredButtons.forEach((starButton) => {
+      const starImg = starButton.querySelector("img");
+      if (showFavoritesOnly) {
+        starImg.src = "./public/star-selected.svg";
+        starButton.style.backgroundColor = "#e6f3ff";
+      } else {
+        starImg.src = "./public/star-selected.svg";
+        starButton.style.backgroundColor = "";
+      }
+    });
 
-  renderRestaurants();
-  updateMapMarkers();
+    renderRestaurants();
+    updateMapMarkers();
+  });
 });
 
 // Modal elements
@@ -430,63 +435,69 @@ fileInput.addEventListener("change", (event) => {
 });
 
 const profileButton = document.querySelector("[data-open-profile]");
+const profileButtons = document.querySelectorAll("[data-open-profile]");
 const profileCloseButtons = document.querySelectorAll("[data-close-modal]");
 
 // Function to update sidebar profile picture
 function updateSidebarProfilePicture() {
   const user = JSON.parse(localStorage.getItem("currentUser"));
-  const profileButtonImg = profileButton.querySelector("img");
-  if (user && user.profilePicture && profileButtonImg) {
-    // Hide the default profile icon and set background image
-    profileButtonImg.style.display = "none";
-    profileButton.style.backgroundImage = `url('${user.profilePicture}')`;
-    profileButton.style.backgroundSize = "cover";
-    profileButton.style.backgroundPosition = "center";
-  } else if (profileButtonImg) {
-    // Show default profile icon
-    profileButtonImg.style.display = "inline";
-    profileButton.style.backgroundImage = "";
-  }
+  // Update all profile buttons (both mobile and desktop)
+  profileButtons.forEach((button) => {
+    const profileButtonImg = button.querySelector("img");
+    if (user && user.profilePicture && profileButtonImg) {
+      // Hide the default profile icon and set background image
+      profileButtonImg.style.display = "none";
+      button.style.backgroundImage = `url('${user.profilePicture}')`;
+      button.style.backgroundSize = "cover";
+      button.style.backgroundPosition = "center";
+    } else if (profileButtonImg) {
+      // Show default profile icon
+      profileButtonImg.style.display = "inline";
+      button.style.backgroundImage = "";
+    }
+  });
 }
 
-// Profile button click handler
-profileButton.addEventListener("click", () => {
-  if (isUserLoggedIn()) {
-    // Fill profile modal inputs with user info
-    const user = JSON.parse(localStorage.getItem("currentUser"));
-    if (user) {
-      const usernameInput = profileModal.querySelector(
-        'input[name="username"]'
-      );
-      const firstNameInput = profileModal.querySelector(
-        'input[name="first-name"]'
-      );
-      const lastNameInput = profileModal.querySelector(
-        'input[name="last-name"]'
-      );
-      if (usernameInput) usernameInput.value = user.username || "";
-      if (firstNameInput) firstNameInput.value = user.firstName || "";
-      if (lastNameInput) lastNameInput.value = user.lastName || "";
+// Profile button click handler for all profile buttons
+profileButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    if (isUserLoggedIn()) {
+      // Fill profile modal inputs with user info
+      const user = JSON.parse(localStorage.getItem("currentUser"));
+      if (user) {
+        const usernameInput = profileModal.querySelector(
+          'input[name="username"]'
+        );
+        const firstNameInput = profileModal.querySelector(
+          'input[name="first-name"]'
+        );
+        const lastNameInput = profileModal.querySelector(
+          'input[name="last-name"]'
+        );
+        if (usernameInput) usernameInput.value = user.username || "";
+        if (firstNameInput) firstNameInput.value = user.firstName || "";
+        if (lastNameInput) lastNameInput.value = user.lastName || "";
 
-      // Always clear and set profile picture based on current user data
-      if (profilePictureDiv) {
-        if (user.profilePicture) {
-          profilePictureDiv.style.backgroundImage = `url('${user.profilePicture}')`;
-          profilePictureDiv.style.backgroundSize = "cover";
-          profilePictureDiv.style.backgroundPosition = "center";
-        } else {
-          // Clear any existing background image if user has no profile picture
-          profilePictureDiv.style.backgroundImage = "";
-          profilePictureDiv.style.backgroundSize = "";
-          profilePictureDiv.style.backgroundPosition = "";
+        // Always clear and set profile picture based on current user data
+        if (profilePictureDiv) {
+          if (user.profilePicture) {
+            profilePictureDiv.style.backgroundImage = `url('${user.profilePicture}')`;
+            profilePictureDiv.style.backgroundSize = "cover";
+            profilePictureDiv.style.backgroundPosition = "center";
+          } else {
+            // Clear any existing background image if user has no profile picture
+            profilePictureDiv.style.backgroundImage = "";
+            profilePictureDiv.style.backgroundSize = "";
+            profilePictureDiv.style.backgroundPosition = "";
+          }
         }
       }
+      profileModal.showModal();
+    } else {
+      // User is not logged in, show login modal
+      loginModal.showModal();
     }
-    profileModal.showModal();
-  } else {
-    // User is not logged in, show login modal
-    loginModal.showModal();
-  }
+  });
 });
 
 // Close modal buttons
@@ -627,12 +638,12 @@ signOutButton.addEventListener("click", () => {
   selectedRestaurant = null;
 
   // Reset show starred button appearance
-  const showStarredButton = document.querySelector("[data-show-starred]");
-  if (showStarredButton) {
-    const starImg = showStarredButton.querySelector("img");
+  const showStarredButtons = document.querySelectorAll("[data-show-starred]");
+  showStarredButtons.forEach((starButton) => {
+    const starImg = starButton.querySelector("img");
     if (starImg) starImg.src = "./public/star-selected.svg";
-    showStarredButton.style.backgroundColor = "";
-  }
+    starButton.style.backgroundColor = "";
+  });
 
   // Reset sidebar profile picture to default
   updateSidebarProfilePicture();
