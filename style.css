@@ -73,7 +73,39 @@ body {
 
 .sidebar_sort {
   display: flex;
-  gap: 15px;
+  gap: 11px;
+}
+
+.sidebar_search {
+  width: 150px;
+}
+
+.sidebar_search input {
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding-left: 15px;
+
+  background-image: url(/public/search-icon.svg);
+  background-size: 17px auto;
+  background-position: 10px 9px;
+
+  background-repeat: no-repeat;
+}
+
+/* .sidebar_search input:active, */
+.sidebar_search input:focus,
+.sidebar_search input:not(:placeholder-shown) {
+  background-image: none;
+}
+
+.sidebar_search input:focus::placeholder {
+  color: transparent;
+}
+
+.sidebar_search input::placeholder {
+  text-indent: 20px;
 }
 
 .sidebar_sort .filter_button,
@@ -199,11 +231,11 @@ input[type="radio"]:focus {
   background-color: #fff;
 }
 
-/* .dropdown_select_area {
+.dropdown_select_area {
   display: flex;
   flex-direction: column;
   gap: 5px;
-} */
+}
 
 .filter_dropdown label,
 .dropdown-content legend {
@@ -258,6 +290,13 @@ input[type="radio"]:focus {
 
 .restaurants_list_restaurant.selected-restaurant {
   border-color: var(--color-blue);
+}
+
+.restaurant_star {
+  background: none;
+  border: none;
+  /* position: absolute; */
+  cursor: pointer;
 }
 
 .restaurant_title_row {
@@ -503,7 +542,7 @@ dialog::backdrop {
 
 dialog button {
   color: white;
-  padding: 5px 15px;
+  padding: 8px 17px;
   display: flex;
   gap: 10px;
   border: none;
@@ -537,7 +576,7 @@ dialog button {
 .profile_basic_info > div {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 5px;
 }
 
 dialog input {
@@ -563,7 +602,7 @@ dialog input {
 .change_passwords_inputs > div {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 5px;
 }
 
 .change_passwords_inputs span {

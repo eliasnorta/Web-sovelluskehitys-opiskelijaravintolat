@@ -39,6 +39,9 @@
           </div>
         </div>
         <div class="sidebar_sort">
+          <div class="sidebar_search">
+            <input type="text" placeholder="Hae nimellä" />
+          </div>
           <div class="sort_by_dropdown">
             <button class="sort_button">
               <img src="./public/sort-icon.svg" alt="sort-icon" />
@@ -116,7 +119,7 @@
             <div id="filter_dropdown" class="dropdown-content">
               <div class="dropdown_wrapper">
                 <h2>Filter by</h2>
-                <div class="dropdown_select_area form_element">
+                <div class="dropdown_select_area">
                   <label for="city"><small>Kaupunki</small></label>
                   <select id="city" name="filter"></select>
                 </div>
@@ -161,15 +164,15 @@
 
         <div class="profile_basic_info">
           <div class="">
-            <label for="username">Username</label>
+            <label for="username"><small>Username</small></label>
             <input type="text" name="username" placeholder="Username" id="" />
           </div>
           <div>
-            <label for="first-name">Etunimi</label>
+            <label for="first-name"><small>Etunimi</small></label>
             <input type="text" name="first-name" placeholder="John" id="" />
           </div>
           <div>
-            <label for="last-name">Sukunimi</label>
+            <label for="last-name"><small>Sukunimi</small></label>
             <input type="text" name="last-name" placeholder="Smith" id="" />
           </div>
         </div>
@@ -180,15 +183,19 @@
 
         <div class="change_passwords_inputs">
           <div>
-            <label for="old-password">Vanha salasana<span>*</span></label>
+            <label for="old-password"
+              ><small>Vanha salasana</small><span>*</span></label
+            >
             <input type="password" name="old-password" id="" />
           </div>
           <div>
-            <label for="new-password">Uusi<span>*</span></label>
+            <label for="new-password"><small>Uusi</small><span>*</span></label>
             <input type="password" name="new-password" id="" />
           </div>
           <div>
-            <label for="new-password-again">Uusi uudestaan<span>*</span></label>
+            <label for="new-password-again"
+              ><small>Uusi uudestaan</small><span>*</span></label
+            >
             <input type="password" name="new-password-again" id="" />
           </div>
         </div>

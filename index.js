@@ -19,6 +19,7 @@ let sortBy = "location_asc";
 let mapMarkers = [];
 let userLocation = { lat: 60.1699, lng: 24.9384 }; // Default to Helsinki center
 let showFavoritesOnly = false;
+let searchQuery = "";
 
 // open filter dropdown
 const filterButton = document.querySelector(".filter_button");
@@ -165,6 +166,17 @@ fetchData(RESTAURANTS_ENDPOINT)
         }
       });
     });
+
+    // Add event listener for search input
+    const searchInput = document.querySelector(
+      '.sidebar_search input[type="text"]'
+    );
+    if (searchInput) {
+      searchInput.addEventListener("input", (e) => {
+        searchQuery = e.target.value.trim().toLowerCase();
+        filterRestaurants();
+      });
+    }
 
     restaurants.forEach((restaurant) => {
       const restaurantName = restaurant.name;
@@ -970,8 +982,10 @@ function getFilteredRestaurants() {
       filterProvider === "all" || restaurant.company === filterProvider;
     const matchesFavorites =
       !showFavoritesOnly || isRestaurantFavorited(restaurant._id);
+    const matchesSearch =
+      searchQuery === "" || restaurant.name.toLowerCase().includes(searchQuery);
 
-    return matchesCity && matchesProvider && matchesFavorites;
+    return matchesCity && matchesProvider && matchesFavorites && matchesSearch;
   });
 
   return sortRestaurants(filtered);
@@ -1083,6 +1097,16 @@ function renderRestaurants() {
     container.appendChild(showAllDiv);
   }
 
+  // Find the closest restaurant when showing multiple restaurants
+  let closestRestaurant = null;
+  if (!selectedRestaurant && restaurantsToShow.length > 1) {
+    closestRestaurant = restaurantsToShow.reduce((closest, current) => {
+      return calculateDistance(current) < calculateDistance(closest)
+        ? current
+        : closest;
+    });
+  }
+
   restaurantsToShow.forEach((r) => {
     const div = document.createElement("div");
     div.className = "restaurants_list_restaurant";
@@ -1090,14 +1114,32 @@ function renderRestaurants() {
     if (restaurantsToShow.length === 1 && selectedRestaurant) {
       div.classList.add("selected-restaurant");
     }
+
+    // Check if this is the closest restaurant
+    const isClosest = closestRestaurant && r._id === closestRestaurant._id;
+
+    // Add blue border and closest restaurant indicator for the closest restaurant
+    if (isClosest) {
+      div.style.border = "2px solid #007acc";
+    }
+
     // Add visual indicator that restaurant cards are clickable
     div.style.cursor = "pointer";
     const providerName = r.company || r.provider || "";
     const isFavorited = isRestaurantFavorited(r._id);
+
+    // Add closest restaurant text if this is the closest one
+    const closestText = isClosest
+      ? '<div style="color: #007acc; font-weight: bold; margin-bottom: 8px; font-size: 14px;">Lähin ravintolasi!</div>'
+      : "";
+
     div.innerHTML = `
+      ${closestText}
       <div class="restaurant_title_row">
         <h3>${r.name}</h3>
-        <button data-favorite-restaurant data-restaurant-id="${r._id}">
+        <button class="restaurant_star" data-favorite-restaurant data-restaurant-id="${
+          r._id
+        }">
           <img src="./public/${
             isFavorited ? "star-selected.svg" : "star-unselected.svg"
           }" alt="like" />
