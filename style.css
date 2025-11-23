@@ -287,6 +287,26 @@ input[type="radio"]:focus {
   /* padding-right: 18px; */
 }
 
+/* Custom scrollbar that only appears when scrolling */
+.sidebar_restaurants_list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar_restaurants_list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar_restaurants_list::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 3px;
+}
+
+/* Firefox - hide scrollbar when not scrolling */
+.sidebar_restaurants_list {
+  scrollbar-width: auto;
+  scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+}
+
 .restaurants_list_restaurant {
   background-color: #fff;
   border: 1px solid var(--border-color);
@@ -781,6 +801,10 @@ dialog input {
     /* background-color: red; */
   }
 
+  .content_wrapper {
+    flex-direction: column;
+  }
+
   #sidebar {
     position: inherit;
     max-width: 100vw;
@@ -795,7 +819,7 @@ dialog input {
 
   #mobile_navbar {
     display: flex;
-    position: absolute;
+    position: sticky;
     top: 0;
     /* left: 0; */
     z-index: 9999999999;
@@ -846,11 +870,11 @@ dialog input {
   }
 
   .map_section {
-    height: 55vh;
+    /* height: 55vh; */
   }
 
   #map {
-    height: 55vh;
+    height: 61.1vh;
   }
 
   input {
