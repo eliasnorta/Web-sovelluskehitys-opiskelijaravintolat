@@ -1097,7 +1097,9 @@ function renderRestaurants() {
     div.innerHTML = `
       <div class="restaurant_title_row">
         <h3>${r.name}</h3>
-        <button data-favorite-restaurant data-restaurant-id="${r._id}">
+        <button class="restaurant_star" data-favorite-restaurant data-restaurant-id="${
+          r._id
+        }">
           <img src="./public/${
             isFavorited ? "star-selected.svg" : "star-unselected.svg"
           }" alt="like" />

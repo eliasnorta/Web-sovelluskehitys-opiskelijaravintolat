@@ -199,11 +199,11 @@ input[type="radio"]:focus {
   background-color: #fff;
 }
 
-/* .dropdown_select_area {
+.dropdown_select_area {
   display: flex;
   flex-direction: column;
   gap: 5px;
-} */
+}
 
 .filter_dropdown label,
 .dropdown-content legend {
@@ -258,6 +258,13 @@ input[type="radio"]:focus {
 
 .restaurants_list_restaurant.selected-restaurant {
   border-color: var(--color-blue);
+}
+
+.restaurant_star {
+  background: none;
+  border: none;
+  /* position: absolute; */
+  cursor: pointer;
 }
 
 .restaurant_title_row {
@@ -503,7 +510,7 @@ dialog::backdrop {
 
 dialog button {
   color: white;
-  padding: 5px 15px;
+  padding: 8px 17px;
   display: flex;
   gap: 10px;
   border: none;
@@ -537,7 +544,7 @@ dialog button {
 .profile_basic_info > div {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 5px;
 }
 
 dialog input {
@@ -563,7 +570,7 @@ dialog input {
 .change_passwords_inputs > div {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 5px;
 }
 
 .change_passwords_inputs span {
