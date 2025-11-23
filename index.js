@@ -8,22 +8,38 @@ map.on("popupclose", function () {
 let selectedRestaurant = null;
 let filterCity = "all";
 let filterProvider = "all";
+let sortBy = "location_asc";
 let mapMarkers = [];
 
 // open filter dropdown
 const filterButton = document.querySelector(".filter_button");
 
 filterButton.addEventListener("click", () => {
-  document.getElementById("filterDropdown").classList.toggle("show");
+  // Close sort dropdown if open
+  sortDropdown.classList.remove("show");
+  document.getElementById("filter_dropdown").classList.toggle("show");
 });
 
-const filterDropdown = document.getElementById("filterDropdown");
+const filterDropdown = document.getElementById("filter_dropdown");
+
+// open sort dropdown
+const sortButton = document.querySelector(".sort_button");
+
+sortButton.addEventListener("click", () => {
+  // Close filter dropdown if open
+  filterDropdown.classList.remove("show");
+  document.getElementById("sort_by_dropdown").classList.toggle("show");
+});
+
+const sortDropdown = document.getElementById("sort_by_dropdown");
 
 // Close the dropdown if the user clicks outside of it
 window.onclick = function (event) {
   if (
     !event.target.matches(".filter_button") &&
-    !filterDropdown.contains(event.target)
+    !filterDropdown.contains(event.target) &&
+    !event.target.matches(".sort_button") &&
+    !sortDropdown.contains(event.target)
   ) {
     var dropdowns = document.getElementsByClassName("dropdown-content");
     var i;
@@ -128,6 +144,17 @@ fetchData(RESTAURANTS_ENDPOINT)
     serviceProviderSelect.addEventListener("change", (e) => {
       filterProvider = e.target.value;
       filterRestaurants();
+    });
+
+    // Add event listeners for sort radio buttons
+    const sortRadios = document.querySelectorAll('input[name="sort"]');
+    sortRadios.forEach((radio) => {
+      radio.addEventListener("change", (e) => {
+        if (e.target.checked) {
+          sortBy = e.target.value;
+          renderRestaurants();
+        }
+      });
     });
 
     restaurants.forEach((restaurant) => {
@@ -308,12 +335,47 @@ const container = document.querySelector(".sidebar_restaurants_list");
 
 // Filter restaurants based on selected filters
 function getFilteredRestaurants() {
-  return allRestaurants.filter((restaurant) => {
+  let filtered = allRestaurants.filter((restaurant) => {
     const matchesCity = filterCity === "all" || restaurant.city === filterCity;
     const matchesProvider =
       filterProvider === "all" || restaurant.company === filterProvider;
     return matchesCity && matchesProvider;
   });
+
+  return sortRestaurants(filtered);
+}
+
+// Sort restaurants based on selected sort criteria
+function sortRestaurants(restaurants) {
+  if (!sortBy) return restaurants;
+
+  return [...restaurants].sort((a, b) => {
+    switch (sortBy) {
+      case "location_asc": // Location ascending (closest first)
+        return calculateDistance(a) - calculateDistance(b);
+      case "location_desc": // Location descending (farthest first)
+        return calculateDistance(b) - calculateDistance(a);
+      case "name_asc": // Name A-Z
+        return a.name.localeCompare(b.name);
+      case "name_desc": // Name Z-A
+        return b.name.localeCompare(a.name);
+      default:
+        return 0;
+    }
+  });
+}
+
+// Calculate distance from Helsinki center for location sorting
+function calculateDistance(restaurant) {
+  const helsinkiLat = 60.1699;
+  const helsinkiLng = 24.9384;
+  const restLat = restaurant.location.coordinates[1];
+  const restLng = restaurant.location.coordinates[0];
+
+  // Simple Euclidean distance for sorting purposes
+  const dx = helsinkiLat - restLat;
+  const dy = helsinkiLng - restLng;
+  return Math.sqrt(dx * dx + dy * dy);
 }
 
 // Filter restaurants and update both sidebar and map
