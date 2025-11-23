@@ -33,7 +33,7 @@
             </button>
           </div>
           <div class="sidebar_starred_container">
-            <button class="sidebar_round_button">
+            <button class="sidebar_round_button" data-show-starred>
               <img src="./public/star-selected.svg" alt="starred" />
             </button>
           </div>
@@ -116,7 +116,7 @@
             <div id="filter_dropdown" class="dropdown-content">
               <div class="dropdown_wrapper">
                 <h2>Filter by</h2>
-                <div class="dropdown_select_area">
+                <div class="dropdown_select_area form_element">
                   <label for="city"><small>Kaupunki</small></label>
                   <select id="city" name="filter"></select>
                 </div>
@@ -139,7 +139,8 @@
       </section>
     </div>
 
-    <dialog>
+    <!-- profile dialog -->
+    <dialog id="profile_modal">
       <button data-close-modal>&times;</button>
       <h1 class="profile_title">Profiili</h1>
       <div class="profile_basic_info_row profile_section">
@@ -159,7 +160,7 @@
         </div>
 
         <div class="profile_basic_info">
-          <div>
+          <div class="">
             <label for="username">Username</label>
             <input type="text" name="username" placeholder="Username" id="" />
           </div>
@@ -192,7 +193,7 @@
           </div>
         </div>
 
-        <input type="submit" value="Vaihda" />
+        <!-- <input type="submit" value="Vaihda" /> -->
       </div>
       <div class="profile_bottom_buttons">
         <div>
@@ -200,6 +201,81 @@
         </div>
         <div>
           <button data-save-changes>Tallenna tiedot</button>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- register modal -->
+    <dialog id="register_modal">
+      <div class="register_modal_wrapper">
+        <button data-close-modal>&times;</button>
+        <h1>Luo Käyttäjä</h1>
+
+        <div class="register_form_name_elements">
+          <div class="form_element">
+            <label for="first-name"><small>Etunimi</small></label>
+            <input type="text" name="first-name" placeholder="John" id="" />
+          </div>
+          <div class="form_element">
+            <label for="last-name"><small>Sukunimi</small></label>
+            <input type="text" name="last-name" placeholder="Smith" id="" />
+          </div>
+        </div>
+
+        <div class="register_form_username_password_elements">
+          <div>
+            <label for="create-username"
+              ><small>Käyttäjänimi</small><span>*</span></label
+            >
+            <input type="text" name="create-username" id="" />
+          </div>
+          <div>
+            <label for="create-password"
+              ><small>Luo salasana</small><span>*</span></label
+            >
+            <input type="password" name="create-password" id="" />
+          </div>
+          <div>
+            <label for="create-password-again"
+              ><small>Salasana uudestaan</small><span>*</span></label
+            >
+            <input type="password" name="create-password-again" id="" />
+          </div>
+        </div>
+        <div class="modal_submit register_submit">
+          <input type="submit" value="Luo käyttäjä" />
+        </div>
+      </div>
+    </dialog>
+
+    <!-- Login modal -->
+    <dialog id="login_modal">
+      <div class="login_modal_wrapper">
+        <button data-close-modal>&times;</button>
+        <h1>Kirjaudu</h1>
+        <div class="login_inputs">
+          <div class="form_element">
+            <label for="first-name"><small>Käyttäjänimi</small></label>
+            <input type="text" name="first-name" placeholder="John" id="" />
+          </div>
+          <div class="form_element">
+            <label for="login-password"><small>Salasana</small></label>
+            <input
+              type="password"
+              name="login-password"
+              placeholder="**************"
+              id=""
+            />
+          </div>
+          <div class="modal_submit">
+            <input type="submit" value="Kirjaudu" />
+          </div>
+        </div>
+        <div class="create_acc_footer">
+          <small>
+            Ei vielä tiliä?
+            <button id="open_register_modal">Luo käyttäjä</button>
+          </small>
         </div>
       </div>
     </dialog>

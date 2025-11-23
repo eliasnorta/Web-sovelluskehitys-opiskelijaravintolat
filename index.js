@@ -1,13 +1,17 @@
+// stores all restaurants fetched from API
 let allRestaurants = [];
 
+// set default view to Helsinki
 var map = L.map("map").setView([60.1699, 24.9384], 13);
 // Reset sidebar when any marker popup is closed
 let isUpdatingMarkers = false; // Prevent infinite loop
+
 map.on("popupclose", function () {
   if (!isUpdatingMarkers) {
     window.unselectRestaurant();
   }
 });
+
 let selectedRestaurant = null;
 let filterCity = "all";
 let filterProvider = "all";
@@ -180,8 +184,8 @@ fetchData(RESTAURANTS_ENDPOINT)
     renderRestaurants();
   })
   .catch((err) => {
-    modal.innerHTML = `<form method="dialog"><h2>Error</h2><p>${err.message}</p><button>Close</button></form>`;
-    modal.showModal();
+    profileModal.innerHTML = `<form method="dialog"><h2>Error</h2><p>${err.message}</p><button>Close</button></form>`;
+    profileModal.showModal();
   });
 
 // get user's location and display restaurants on map
@@ -215,21 +219,538 @@ navigator.geolocation.getCurrentPosition(function (pos) {
   renderRestaurants();
 });
 
-// modal
-const modal = document.querySelector("dialog");
+// Simple authentication check function
+function isUserLoggedIn() {
+  return localStorage.getItem("currentUser") !== null;
+}
+
+// Check if username already exists (excluding current user if provided)
+function isUsernameAlreadyTaken(username, excludeUsername = null) {
+  const users = JSON.parse(localStorage.getItem("users")) || [];
+  return users.some(
+    (user) => user.username === username && user.username !== excludeUsername
+  );
+}
+
+// Store a test user in localStorage
+function createTestUser() {
+  const testUser = {
+    firstName: "John",
+    lastName: "Smith",
+    username: "jsmith",
+    password: "123456",
+  };
+  // Store in localStorage under 'testUser' key
+  localStorage.setItem("testUser", JSON.stringify(testUser));
+
+  // Initialize users array if it doesn't exist
+  if (!localStorage.getItem("users")) {
+    const users = [testUser];
+    localStorage.setItem("users", JSON.stringify(users));
+  }
+}
+
+// Create the test user if not present
+if (!localStorage.getItem("testUser")) {
+  createTestUser();
+}
+
+// Update sidebar profile picture on page load
+window.addEventListener("DOMContentLoaded", () => {
+  updateSidebarProfilePicture();
+});
+
+// Modal elements
+const profileModal = document.querySelector("#profile_modal");
+const loginModal = document.querySelector("#login_modal");
+const registerModal = document.getElementById("register_modal");
+
+// Profile picture upload functionality
+const uploadProfileBtn = profileModal.querySelector("[data-upload-profile]");
+const deleteProfileBtn = profileModal.querySelector("[data-delete-profile]");
+const profilePictureDiv = profileModal.querySelector(".profile_picture");
+// Create a hidden file input for image upload
+const fileInput = document.createElement("input");
+fileInput.type = "file";
+fileInput.accept = "image/*";
+fileInput.style.display = "none";
+document.body.appendChild(fileInput);
+
+uploadProfileBtn.addEventListener("click", () => {
+  fileInput.click();
+});
+
+// Delete profile picture functionality
+deleteProfileBtn.addEventListener("click", () => {
+  // Remove from currentUser
+  let user = JSON.parse(localStorage.getItem("currentUser"));
+  if (user && user.profilePicture) {
+    delete user.profilePicture;
+    localStorage.setItem("currentUser", JSON.stringify(user));
+  }
+
+  // Remove from testUser so it stays deleted after logout/login
+  let testUser = JSON.parse(localStorage.getItem("testUser"));
+  if (testUser && testUser.profilePicture) {
+    delete testUser.profilePicture;
+    localStorage.setItem("testUser", JSON.stringify(testUser));
+  }
+
+  // Remove from users array
+  if (user) {
+    const users = JSON.parse(localStorage.getItem("users")) || [];
+    const userIndex = users.findIndex((u) => u.username === user.username);
+    if (userIndex !== -1 && users[userIndex].profilePicture) {
+      delete users[userIndex].profilePicture;
+      localStorage.setItem("users", JSON.stringify(users));
+    }
+  }
+
+  // Clear profile picture from modal
+  if (profilePictureDiv) {
+    profilePictureDiv.style.backgroundImage = "";
+  }
+
+  // Update sidebar profile button to show default icon
+  updateSidebarProfilePicture();
+});
+
+fileInput.addEventListener("change", (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  // Check file size (5MB limit)
+  const maxSizeInBytes = 5 * 1024 * 1024; // 5MB
+  if (file.size > maxSizeInBytes) {
+    alert("Kuva on liian suuri. Maksimikoko on 5MB. Valitse pienempi kuva.");
+    // Clear the file input
+    fileInput.value = "";
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const base64Image = e.target.result;
+    // Save image to currentUser in localStorage
+    let user = JSON.parse(localStorage.getItem("currentUser"));
+    if (user) {
+      user.profilePicture = base64Image;
+      localStorage.setItem("currentUser", JSON.stringify(user));
+
+      // Also save to testUser so profile picture persists after logout
+      let testUser = JSON.parse(localStorage.getItem("testUser"));
+      if (testUser) {
+        testUser.profilePicture = base64Image;
+        localStorage.setItem("testUser", JSON.stringify(testUser));
+      }
+
+      // Update in users array
+      const users = JSON.parse(localStorage.getItem("users")) || [];
+      const userIndex = users.findIndex((u) => u.username === user.username);
+      if (userIndex !== -1) {
+        users[userIndex].profilePicture = base64Image;
+        localStorage.setItem("users", JSON.stringify(users));
+      }
+
+      // Show image in profile modal
+      if (profilePictureDiv) {
+        profilePictureDiv.style.backgroundImage = `url('${base64Image}')`;
+        profilePictureDiv.style.backgroundSize = "cover";
+        profilePictureDiv.style.backgroundPosition = "center";
+      }
+      // Update sidebar profile button
+      updateSidebarProfilePicture();
+    }
+  };
+  reader.readAsDataURL(file);
+});
 
 const profileButton = document.querySelector("[data-open-profile]");
-const profileCloseButton = document.querySelector("[data-close-modal]");
+const profileCloseButtons = document.querySelectorAll("[data-close-modal]");
 
+// Function to update sidebar profile picture
+function updateSidebarProfilePicture() {
+  const user = JSON.parse(localStorage.getItem("currentUser"));
+  const profileButtonImg = profileButton.querySelector("img");
+  if (user && user.profilePicture && profileButtonImg) {
+    // Hide the default profile icon and set background image
+    profileButtonImg.style.display = "none";
+    profileButton.style.backgroundImage = `url('${user.profilePicture}')`;
+    profileButton.style.backgroundSize = "cover";
+    profileButton.style.backgroundPosition = "center";
+  } else if (profileButtonImg) {
+    // Show default profile icon
+    profileButtonImg.style.display = "inline";
+    profileButton.style.backgroundImage = "";
+  }
+}
+
+// Profile button click handler
 profileButton.addEventListener("click", () => {
-  modal.showModal();
+  if (isUserLoggedIn()) {
+    // Fill profile modal inputs with user info
+    const user = JSON.parse(localStorage.getItem("currentUser"));
+    if (user) {
+      const usernameInput = profileModal.querySelector(
+        'input[name="username"]'
+      );
+      const firstNameInput = profileModal.querySelector(
+        'input[name="first-name"]'
+      );
+      const lastNameInput = profileModal.querySelector(
+        'input[name="last-name"]'
+      );
+      if (usernameInput) usernameInput.value = user.username || "";
+      if (firstNameInput) firstNameInput.value = user.firstName || "";
+      if (lastNameInput) lastNameInput.value = user.lastName || "";
+
+      // Always clear and set profile picture based on current user data
+      if (profilePictureDiv) {
+        if (user.profilePicture) {
+          profilePictureDiv.style.backgroundImage = `url('${user.profilePicture}')`;
+          profilePictureDiv.style.backgroundSize = "cover";
+          profilePictureDiv.style.backgroundPosition = "center";
+        } else {
+          // Clear any existing background image if user has no profile picture
+          profilePictureDiv.style.backgroundImage = "";
+          profilePictureDiv.style.backgroundSize = "";
+          profilePictureDiv.style.backgroundPosition = "";
+        }
+      }
+    }
+    profileModal.showModal();
+  } else {
+    // User is not logged in, show login modal
+    loginModal.showModal();
+  }
 });
 
-profileCloseButton.addEventListener("click", () => {
-  modal.close();
+// Close modal buttons
+profileCloseButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    profileModal.close();
+    loginModal.close();
+    registerModal.close();
+  });
 });
+// Add event listener for register modal button
+const openRegisterModalBtn = document.getElementById("open_register_modal");
+if (openRegisterModalBtn && registerModal) {
+  openRegisterModalBtn.addEventListener("click", () => {
+    loginModal.close();
+    registerModal.showModal();
+  });
+}
+
+// Register user functionality
+const registerForm = registerModal?.querySelector(".register_modal_wrapper");
+if (registerForm) {
+  const firstNameInput = registerForm.querySelector('input[name="first-name"]');
+  const lastNameInput = registerForm.querySelector('input[name="last-name"]');
+  const usernameInput = registerForm.querySelector(
+    'input[name="create-username"]'
+  );
+  const passwordInput = registerForm.querySelector(
+    'input[name="create-password"]'
+  );
+  const confirmPasswordInput = registerForm.querySelector(
+    'input[name="create-password-again"]'
+  );
+  const submitInput = registerForm.querySelector('input[type="submit"]');
+
+  if (submitInput) {
+    submitInput.addEventListener("click", (e) => {
+      e.preventDefault();
+
+      // Get form values
+      const firstName = firstNameInput.value.trim();
+      const lastName = lastNameInput.value.trim();
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value;
+      const confirmPassword = confirmPasswordInput.value;
+
+      // Basic validation
+      if (!username || !password) {
+        alert("Käyttäjänimi ja salasana ovat pakollisia");
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        alert("Salasanat eivät täsmää");
+        return;
+      }
+
+      if (password.length < 6) {
+        alert("Salasanan tulee olla vähintään 6 merkkiä pitkä");
+        return;
+      }
+
+      // Check if username already exists (check against all users)
+      if (isUsernameAlreadyTaken(username)) {
+        alert("Käyttäjänimi on jo käytössä");
+        return;
+      }
+
+      // Create new user object
+      const newUser = {
+        firstName: firstName || "",
+        lastName: lastName || "",
+        username: username,
+        password: password,
+      };
+
+      // Add new user to users array
+      const users = JSON.parse(localStorage.getItem("users")) || [];
+      users.push(newUser);
+      localStorage.setItem("users", JSON.stringify(users));
+
+      // Save as testUser (set as current active user for login compatibility)
+      localStorage.setItem("testUser", JSON.stringify(newUser));
+
+      // Automatically sign in the new user
+      localStorage.setItem("currentUser", JSON.stringify(newUser));
+
+      // Clear form fields
+      firstNameInput.value = "";
+      lastNameInput.value = "";
+      usernameInput.value = "";
+      passwordInput.value = "";
+      confirmPasswordInput.value = "";
+
+      // Update UI
+      updateSidebarProfilePicture();
+
+      // Close register modal and populate profile modal with user data from localStorage
+      registerModal.close();
+
+      // Fill profile modal inputs with the current user info from localStorage
+      const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+      if (currentUser) {
+        const usernameInput = profileModal.querySelector(
+          'input[name="username"]'
+        );
+        const firstNameInput = profileModal.querySelector(
+          'input[name="first-name"]'
+        );
+        const lastNameInput = profileModal.querySelector(
+          'input[name="last-name"]'
+        );
+        if (usernameInput) usernameInput.value = currentUser.username || "";
+        if (firstNameInput) firstNameInput.value = currentUser.firstName || "";
+        if (lastNameInput) lastNameInput.value = currentUser.lastName || "";
+
+        // Show profile picture if exists (from localStorage)
+        if (profilePictureDiv) {
+          if (currentUser.profilePicture) {
+            profilePictureDiv.style.backgroundImage = `url('${currentUser.profilePicture}')`;
+            profilePictureDiv.style.backgroundSize = "cover";
+            profilePictureDiv.style.backgroundPosition = "center";
+          } else {
+            profilePictureDiv.style.backgroundImage = "";
+          }
+        }
+      }
+
+      profileModal.showModal();
+    });
+  }
+}
+
+// Sign out functionality
+const signOutButton = profileModal.querySelector("[data-sign-out]");
+signOutButton.addEventListener("click", () => {
+  localStorage.removeItem("currentUser");
+  // Reset sidebar profile picture to default
+  updateSidebarProfilePicture();
+  profileModal.close();
+});
+
+// Save changes functionality
+const saveChangesButton = profileModal.querySelector("[data-save-changes]");
+saveChangesButton.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+  if (!currentUser) {
+    alert("Käyttäjä ei ole kirjautunut sisään");
+    return;
+  }
+
+  // Get current form values
+  const usernameInput = profileModal.querySelector('input[name="username"]');
+  const firstNameInput = profileModal.querySelector('input[name="first-name"]');
+  const lastNameInput = profileModal.querySelector('input[name="last-name"]');
+  const oldPasswordInput = profileModal.querySelector(
+    'input[name="old-password"]'
+  );
+  const newPasswordInput = profileModal.querySelector(
+    'input[name="new-password"]'
+  );
+  const newPasswordAgainInput = profileModal.querySelector(
+    'input[name="new-password-again"]'
+  );
+
+  const newUsername = usernameInput.value.trim();
+  const newFirstName = firstNameInput.value.trim();
+  const newLastName = lastNameInput.value.trim();
+  const oldPassword = oldPasswordInput.value;
+  const newPassword = newPasswordInput.value;
+  const newPasswordAgain = newPasswordAgainInput.value;
+
+  // Basic validation
+  if (!newUsername) {
+    alert("Käyttäjänimi on pakollinen");
+    return;
+  }
+
+  // Check if username is changing and if new username already exists
+  if (newUsername !== currentUser.username) {
+    if (isUsernameAlreadyTaken(newUsername, currentUser.username)) {
+      alert("Käyttäjänimi on jo käytössä");
+      return;
+    }
+  }
+
+  // Password validation if any password field is filled
+  if (oldPassword || newPassword || newPasswordAgain) {
+    if (!oldPassword) {
+      alert("Vanha salasana on pakollinen salasanan vaihtamiseksi");
+      return;
+    }
+
+    if (oldPassword !== currentUser.password) {
+      alert("Vanha salasana on väärä");
+      return;
+    }
+
+    if (!newPassword) {
+      alert("Uusi salasana on pakollinen");
+      return;
+    }
+
+    if (newPassword !== newPasswordAgain) {
+      alert("Uudet salasanat eivät täsmää");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      alert("Uuden salasanan tulee olla vähintään 6 merkkiä pitkä");
+      return;
+    }
+  }
+
+  // Update user object
+  const updatedUser = {
+    ...currentUser,
+    username: newUsername,
+    firstName: newFirstName,
+    lastName: newLastName,
+  };
+
+  // Update password if provided
+  if (newPassword) {
+    updatedUser.password = newPassword;
+  }
+
+  // Update in users array
+  const users = JSON.parse(localStorage.getItem("users")) || [];
+  const userIndex = users.findIndex((u) => u.username === currentUser.username);
+  if (userIndex !== -1) {
+    users[userIndex] = updatedUser;
+    localStorage.setItem("users", JSON.stringify(users));
+  }
+
+  // Update currentUser
+  localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+
+  // Update testUser for compatibility if it matches current user
+  const testUser = JSON.parse(localStorage.getItem("testUser"));
+  if (testUser && testUser.username === currentUser.username) {
+    localStorage.setItem("testUser", JSON.stringify(updatedUser));
+  }
+
+  // Clear password fields
+  oldPasswordInput.value = "";
+  newPasswordInput.value = "";
+  newPasswordAgainInput.value = "";
+
+  // Update sidebar profile picture in case username changed
+  updateSidebarProfilePicture();
+
+  alert("Tiedot päivitetty onnistuneesti!");
+});
+
+// Login functionality
+const loginForm = loginModal?.querySelector(".login_inputs");
+if (loginForm) {
+  const usernameInput = loginForm.querySelector('input[name="first-name"]');
+  const passwordInput = loginForm.querySelector('input[name="login-password"]');
+  const submitInput = loginForm.querySelector('input[type="submit"]');
+  if (submitInput) {
+    submitInput.addEventListener("click", (e) => {
+      e.preventDefault();
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value;
+      const users = localStorage.getItem("users");
+      if (users) {
+        const usersList = JSON.parse(users);
+        const user = usersList.find(
+          (u) => u.username === username && u.password === password
+        );
+        if (user) {
+          // Successful login: set currentUser and testUser for compatibility
+          localStorage.setItem("currentUser", JSON.stringify(user));
+          localStorage.setItem("testUser", JSON.stringify(user));
+          // Update sidebar profile picture
+          updateSidebarProfilePicture();
+          loginModal.close();
+
+          // Fill profile modal inputs with the logged-in user info from localStorage
+          const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+          if (currentUser) {
+            const usernameInput = profileModal.querySelector(
+              'input[name="username"]'
+            );
+            const firstNameInput = profileModal.querySelector(
+              'input[name="first-name"]'
+            );
+            const lastNameInput = profileModal.querySelector(
+              'input[name="last-name"]'
+            );
+            if (usernameInput) usernameInput.value = currentUser.username || "";
+            if (firstNameInput)
+              firstNameInput.value = currentUser.firstName || "";
+            if (lastNameInput) lastNameInput.value = currentUser.lastName || "";
+
+            // Always clear and set profile picture based on current user data
+            if (profilePictureDiv) {
+              if (currentUser.profilePicture) {
+                profilePictureDiv.style.backgroundImage = `url('${currentUser.profilePicture}')`;
+                profilePictureDiv.style.backgroundSize = "cover";
+                profilePictureDiv.style.backgroundPosition = "center";
+              } else {
+                // Clear any existing background image if user has no profile picture
+                profilePictureDiv.style.backgroundImage = "";
+                profilePictureDiv.style.backgroundSize = "";
+                profilePictureDiv.style.backgroundPosition = "";
+              }
+            }
+          }
+
+          profileModal.showModal();
+        } else {
+          // Show error
+          alert("Väärä käyttäjänimi tai salasana");
+        }
+      } else {
+        alert("Käyttäjiä ei löydy");
+      }
+    });
+  }
+}
 
 // modal.showModal();
+// loginModal.showModal();
 
 // resize sidebar
 const sidebar = document.getElementById("sidebar");
@@ -472,9 +993,11 @@ function renderRestaurants() {
     div.innerHTML = `
       <div class="restaurant_title_row">
         <h3>${r.name}</h3>
-        <img src="./public/${
-          r.starred ? "star-selected.svg" : "star-unselected.svg"
-        }" alt="like" />
+        <button data-favorite-restaurant>
+          <img src="./public/${
+            r.starred ? "star-selected.svg" : "star-unselected.svg"
+          }" alt="like" />
+        </button>
       </div>
       <div class="restaurant_info_section_container">
         <div>

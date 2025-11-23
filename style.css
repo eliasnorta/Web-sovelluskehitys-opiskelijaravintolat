@@ -15,6 +15,7 @@ body {
   --border-radius: 7px;
   --color-warning: #e10000;
   --color-blue: #216ec4;
+  --color-light-blue: #cae3ff;
 }
 
 .content_wrapper {
@@ -198,11 +199,11 @@ input[type="radio"]:focus {
   background-color: #fff;
 }
 
-.dropdown_select_area {
+/* .dropdown_select_area {
   display: flex;
   flex-direction: column;
   gap: 5px;
-}
+} */
 
 .filter_dropdown label,
 .dropdown-content legend {
@@ -435,7 +436,6 @@ dialog {
   translate: -50% -50%;
   border: none;
   padding: 20px;
-  width: 600px;
 }
 
 dialog::backdrop {
@@ -455,6 +455,11 @@ dialog::backdrop {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+}
+
+/* profile modal */
+#profile_modal {
+  width: 600px;
 }
 
 .profile_title {
@@ -590,4 +595,126 @@ dialog input {
 
 [data-save-changes] {
   background-color: var(--color-blue);
+}
+
+/* login modal */
+#login_modal {
+  text-align: center;
+
+  padding: 30px 40px;
+  padding-bottom: 5.5em;
+}
+
+.login_modal_wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 250px;
+}
+
+#login_modal h1 {
+  font-weight: 400;
+}
+
+.form_element {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  text-align: left;
+}
+
+.login_inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.modal_submit input[type="submit"] {
+  background-color: var(--color-blue);
+  color: white;
+  border: none;
+  margin-top: 20px;
+  padding: 6px 25px;
+  cursor: pointer;
+  transition: 0.5s ease;
+}
+.modal_submit input[type="submit"]:hover {
+  opacity: 0.8;
+}
+
+.modal_submit input[type="submit"]:active {
+  /* transform: scale(0.7); */
+  opacity: 0.3;
+}
+
+.create_acc_footer {
+  background-color: var(--color-light-blue);
+  width: 100%;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 55px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.create_acc_footer small {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  font-size: 0.8rem;
+}
+
+.create_acc_footer button {
+  all: unset;
+  color: var(--color-warning);
+  cursor: pointer;
+}
+
+.create_acc_footer button:hover {
+  text-decoration: underline;
+}
+
+/* register modal */
+#register_modal {
+  padding: 30px 30px;
+}
+
+.register_modal_wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.register_modal_wrapper h1 {
+  text-align: center;
+  font-weight: 400;
+  margin-bottom: 35px;
+}
+
+.register_form_name_elements {
+  display: flex;
+  gap: 10px;
+}
+
+.register_form_username_password_elements {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.register_form_username_password_elements > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.register_form_username_password_elements span {
+  color: var(--color-warning);
+}
+
+.register_submit {
+  display: flex;
+  justify-content: right;
 }
