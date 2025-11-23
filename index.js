@@ -224,6 +224,23 @@ function isUserLoggedIn() {
   return localStorage.getItem("currentUser") !== null;
 }
 
+// Store a test user in localStorage
+function createTestUser() {
+  const testUser = {
+    firstName: "John",
+    lastName: "Smith",
+    username: "jsmith",
+    password: "123456",
+  };
+  // Store in localStorage under 'testUser' key
+  localStorage.setItem("testUser", JSON.stringify(testUser));
+}
+
+// Create the test user if not present
+if (!localStorage.getItem("testUser")) {
+  createTestUser();
+}
+
 // Modal elements
 const profileModal = document.querySelector("#profile_modal");
 const loginModal = document.querySelector("#login_modal");
@@ -235,7 +252,22 @@ const profileCloseButtons = document.querySelectorAll("[data-close-modal]");
 // Profile button click handler
 profileButton.addEventListener("click", () => {
   if (isUserLoggedIn()) {
-    // User is logged in, show profile modal
+    // Fill profile modal inputs with user info
+    const user = JSON.parse(localStorage.getItem("currentUser"));
+    if (user) {
+      const usernameInput = profileModal.querySelector(
+        'input[name="username"]'
+      );
+      const firstNameInput = profileModal.querySelector(
+        'input[name="first-name"]'
+      );
+      const lastNameInput = profileModal.querySelector(
+        'input[name="last-name"]'
+      );
+      if (usernameInput) usernameInput.value = user.username || "";
+      if (firstNameInput) firstNameInput.value = user.firstName || "";
+      if (lastNameInput) lastNameInput.value = user.lastName || "";
+    }
     profileModal.showModal();
   } else {
     // User is not logged in, show login modal
@@ -258,6 +290,43 @@ if (openRegisterModalBtn && registerModal) {
     loginModal.close();
     registerModal.showModal();
   });
+}
+
+// Sign out functionality
+const signOutButton = profileModal.querySelector("[data-sign-out]");
+signOutButton.addEventListener("click", () => {
+  localStorage.removeItem("currentUser");
+  profileModal.close();
+});
+
+// Login functionality
+const loginForm = loginModal?.querySelector(".login_inputs");
+if (loginForm) {
+  const usernameInput = loginForm.querySelector('input[name="first-name"]');
+  const passwordInput = loginForm.querySelector('input[name="login-password"]');
+  const submitInput = loginForm.querySelector('input[type="submit"]');
+  if (submitInput) {
+    submitInput.addEventListener("click", (e) => {
+      e.preventDefault();
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value;
+      const testUser = localStorage.getItem("testUser");
+      if (testUser) {
+        const user = JSON.parse(testUser);
+        if (user.username === username && user.password === password) {
+          // Successful login: set currentUser
+          localStorage.setItem("currentUser", JSON.stringify(user));
+          loginModal.close();
+          profileModal.showModal();
+        } else {
+          // Show error
+          alert("Väärä käyttäjänimi tai salasana");
+        }
+      } else {
+        alert("Testikäyttäjää ei löydy");
+      }
+    });
+  }
 }
 
 // modal.showModal();
