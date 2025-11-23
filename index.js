@@ -2,14 +2,18 @@ let allRestaurants = [];
 
 var map = L.map("map").setView([60.1699, 24.9384], 13);
 // Reset sidebar when any marker popup is closed
+let isUpdatingMarkers = false; // Prevent infinite loop
 map.on("popupclose", function () {
-  window.unselectRestaurant();
+  if (!isUpdatingMarkers) {
+    window.unselectRestaurant();
+  }
 });
 let selectedRestaurant = null;
 let filterCity = "all";
 let filterProvider = "all";
 let sortBy = "location_asc";
 let mapMarkers = [];
+let userLocation = { lat: 60.1699, lng: 24.9384 }; // Default to Helsinki center
 
 // open filter dropdown
 const filterButton = document.querySelector(".filter_button");
@@ -185,6 +189,9 @@ navigator.geolocation.getCurrentPosition(function (pos) {
   const lat = pos.coords.latitude;
   const long = pos.coords.longitude;
 
+  // Update user location for sorting
+  userLocation = { lat: lat, lng: long };
+
   console.log(lat);
   console.log(long);
 
@@ -203,6 +210,9 @@ navigator.geolocation.getCurrentPosition(function (pos) {
     .openPopup();
   map.setView([lat, long], 13);
   map.panBy([pan_map, 0]);
+
+  // Re-render restaurants with updated user location for sorting
+  renderRestaurants();
 });
 
 // modal
@@ -365,17 +375,14 @@ function sortRestaurants(restaurants) {
   });
 }
 
-// Calculate distance from Helsinki center for location sorting
+// Calculate distance using exact same logic as previous assignment
 function calculateDistance(restaurant) {
-  const helsinkiLat = 60.1699;
-  const helsinkiLng = 24.9384;
-  const restLat = restaurant.location.coordinates[1];
-  const restLng = restaurant.location.coordinates[0];
+  const [lonA, latA] = restaurant.location.coordinates;
+  return getDistance(userLocation.lat, userLocation.lng, latA, lonA);
+}
 
-  // Simple Euclidean distance for sorting purposes
-  const dx = helsinkiLat - restLat;
-  const dy = helsinkiLng - restLng;
-  return Math.sqrt(dx * dx + dy * dy);
+function getDistance(lat1, lon1, lat2, lon2) {
+  return Math.sqrt(Math.pow(lat2 - lat1, 2) + Math.pow(lon2 - lon1, 2));
 }
 
 // Filter restaurants and update both sidebar and map
@@ -385,18 +392,41 @@ function filterRestaurants() {
   updateMapMarkers();
 }
 
-// Update map markers visibility based on filters
+// Update map markers visibility based on filters and selection
 function updateMapMarkers() {
-  const filteredRestaurants = getFilteredRestaurants();
-  const filteredIds = new Set(filteredRestaurants.map((r) => r._id));
+  isUpdatingMarkers = true; // Prevent infinite loop
+
+  let restaurantsToShow;
+
+  if (selectedRestaurant) {
+    // If a restaurant is selected, show only that one
+    restaurantsToShow = [selectedRestaurant];
+  } else {
+    // Otherwise show filtered restaurants
+    restaurantsToShow = getFilteredRestaurants();
+  }
+
+  const visibleIds = new Set(restaurantsToShow.map((r) => r._id));
 
   mapMarkers.forEach((marker) => {
-    if (filteredIds.has(marker.restaurant._id)) {
+    if (visibleIds.has(marker.restaurant._id)) {
       marker.addTo(map);
+      // If this is the selected restaurant, open its popup
+      if (
+        selectedRestaurant &&
+        marker.restaurant._id === selectedRestaurant._id
+      ) {
+        marker.openPopup();
+      } else {
+        // Close popup for non-selected restaurants
+        marker.closePopup();
+      }
     } else {
       map.removeLayer(marker);
     }
   });
+
+  isUpdatingMarkers = false; // Allow popup events again
 }
 
 // show restaurants in sidebar
@@ -414,6 +444,21 @@ function renderRestaurants() {
     return;
   }
 
+  // Add "Show all" button if a specific restaurant is selected
+  if (selectedRestaurant) {
+    const showAllDiv = document.createElement("div");
+    showAllDiv.className = "show-all-button";
+    showAllDiv.style.cssText =
+      "padding: 10px; text-align: center; background: #f0f0f0; margin-bottom: 10px; cursor: pointer; border-radius: 5px;";
+    showAllDiv.innerHTML = "← Näytä kaikki ravintolat";
+    showAllDiv.addEventListener("click", () => {
+      selectedRestaurant = null;
+      renderRestaurants();
+      updateMapMarkers();
+    });
+    container.appendChild(showAllDiv);
+  }
+
   restaurantsToShow.forEach((r) => {
     const div = document.createElement("div");
     div.className = "restaurants_list_restaurant";
@@ -421,6 +466,8 @@ function renderRestaurants() {
     if (restaurantsToShow.length === 1 && selectedRestaurant) {
       div.classList.add("selected-restaurant");
     }
+    // Add visual indicator that restaurant cards are clickable
+    div.style.cursor = "pointer";
     const providerName = r.company || r.provider || "";
     div.innerHTML = `
       <div class="restaurant_title_row">
@@ -459,9 +506,23 @@ function renderRestaurants() {
         </div>
       </div>
     `;
+    // Make restaurant card clickable (but not the menu dropdown or menu buttons)
+    div.addEventListener("click", (event) => {
+      // Don't trigger selection if clicking on menu dropdown or menu content
+      if (
+        !event.target.closest(".menu_dropdown") &&
+        !event.target.closest(".restaurant_menu_popup")
+      ) {
+        selectedRestaurant = r;
+        renderRestaurants();
+        updateMapMarkers();
+      }
+    });
+
     // toggle menu
     const menuDropdown = div.querySelector(".menu_dropdown");
-    menuDropdown.addEventListener("click", () => {
+    menuDropdown.addEventListener("click", (event) => {
+      event.stopPropagation(); // Prevent triggering restaurant selection
       openMenu(r);
     });
     container.appendChild(div);
@@ -471,6 +532,7 @@ function renderRestaurants() {
 window.unselectRestaurant = function () {
   selectedRestaurant = null;
   renderRestaurants();
+  updateMapMarkers();
 };
 
 async function openMenu(restaurant) {
@@ -550,7 +612,8 @@ async function openMenu(restaurant) {
     const dayBtn = menuContent.querySelector(".menu_day_button");
     const weekBtn = menuContent.querySelector(".menu_week_button");
     const contentArea = menuContent.querySelector(".menu_content_area");
-    dayBtn.addEventListener("click", () => {
+    dayBtn.addEventListener("click", (e) => {
+      e.stopPropagation(); // Prevent restaurant selection
       dayBtn.classList.add("selected");
       weekBtn.classList.remove("selected");
       contentArea.innerHTML = dailyHtml;
@@ -559,7 +622,8 @@ async function openMenu(restaurant) {
         targetDiv.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     });
-    weekBtn.addEventListener("click", () => {
+    weekBtn.addEventListener("click", (e) => {
+      e.stopPropagation(); // Prevent restaurant selection
       weekBtn.classList.add("selected");
       dayBtn.classList.remove("selected");
       contentArea.innerHTML = weeklyHtml;
