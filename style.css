@@ -91,7 +91,7 @@ body {
   height: 100%;
   border: 1px solid var(--border-color);
   border-radius: 10px;
-  padding-left: 15px;
+  padding-left: 35px;
 
   background-image: url(./public/search-icon.svg);
   background-size: 17px auto;
@@ -104,6 +104,7 @@ body {
 .sidebar_search input:focus,
 .sidebar_search input:not(:placeholder-shown) {
   background-image: none;
+  padding-left: 15px;
 }
 
 .sidebar_search input:focus::placeholder {
@@ -111,7 +112,14 @@ body {
 }
 
 .sidebar_search input::placeholder {
-  text-indent: 20px;
+  padding-left: 0;
+  text-indent: 0;
+}
+
+/* Firefox specific placeholder styling */
+.sidebar_search input::-moz-placeholder {
+  padding-left: 0;
+  text-indent: 0;
 }
 
 .sidebar_sort .filter_button,
@@ -811,6 +819,7 @@ dialog input {
     width: 100vw;
     margin-top: 55vh;
     padding: 0px 20px 0px 20px;
+    z-index: 2;
   }
 
   #sidebar-resize-handle {
@@ -826,6 +835,7 @@ dialog input {
     /* margin-left: 20px; */
     top: 15px;
     width: 100%;
+    z-index: 1;
   }
 
   .mobile_navbar_container {
@@ -874,7 +884,7 @@ dialog input {
   }
 
   #map {
-    height: 61.1vh;
+    /* height: 63vh; */
   }
 
   input {

@@ -1,20 +1,26 @@
 // stores all restaurants fetched from API
 let allRestaurants = [];
 
+// API Configuration
+const API_BASE_URL = "https://media2.edu.metropolia.fi/restaurant/api/v1";
+const RESTAURANTS_ENDPOINT = `${API_BASE_URL}/restaurants`;
+const MENU_LANGUAGE = "fi";
+
+const pan_map = -200;
+
 // set default view to Helsinki
 var map = L.map("map", {
   zoomControl: false, // Disable default zoom control
 }).setView([60.1699, 24.9384], 13);
 
-// Add zoom control in a different position
-// Options: 'topleft', 'topright', 'bottomleft', 'bottomright'
+// Add leaflet map zoom control in a different position
 L.control
   .zoom({
-    position: "bottomright", // Change this to your desired position
+    position: "bottomright",
   })
   .addTo(map);
 // Reset sidebar when any marker popup is closed
-let isUpdatingMarkers = false; // Prevent infinite loop
+let isUpdatingMarkers = false;
 
 map.on("popupclose", function () {
   if (!isUpdatingMarkers) {
@@ -35,7 +41,6 @@ let searchQuery = "";
 const filterButton = document.querySelector(".filter_button");
 
 filterButton.addEventListener("click", () => {
-  // Close sort dropdown if open
   sortDropdown.classList.remove("show");
   document.getElementById("filter_dropdown").classList.toggle("show");
 });
@@ -46,7 +51,6 @@ const filterDropdown = document.getElementById("filter_dropdown");
 const sortButton = document.querySelector(".sort_button");
 
 sortButton.addEventListener("click", () => {
-  // Close filter dropdown if open
   filterDropdown.classList.remove("show");
   document.getElementById("sort_by_dropdown").classList.toggle("show");
 });
@@ -82,16 +86,6 @@ function handleOpenMenu(targetDiv) {
 function handleCloseMenu(targetDiv) {
   targetDiv.classList.remove("selected-restaurant");
 }
-// API Configuration
-const API_BASE_URL = "https://media2.edu.metropolia.fi/restaurant/api/v1";
-const RESTAURANTS_ENDPOINT = `${API_BASE_URL}/restaurants`;
-const MENU_LANGUAGE = "fi";
-
-const pan_map = -100;
-
-// pan map slighly to left by 10%
-// const mapWidth = map.getSize().x;
-map.panBy([pan_map, 0]);
 
 const attribution =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
@@ -128,7 +122,7 @@ fetchData(RESTAURANTS_ENDPOINT)
       ...new Set(restaurants.map((r) => r.city).filter((city) => city)),
     ];
     const citySelect = document.getElementById("city");
-    // Clear existing options except "Kaikki"
+
     citySelect.innerHTML = '<option value="all">Kaikki</option>';
     // Add city options
     uniqueCities.forEach((city) => {
@@ -145,7 +139,7 @@ fetchData(RESTAURANTS_ENDPOINT)
       ),
     ];
     const serviceProviderSelect = document.getElementById("serviceprovider");
-    // Clear existing options except "Kaikki"
+
     serviceProviderSelect.innerHTML = '<option value="all">Kaikki</option>';
     // Add company options
     uniqueCompanies.forEach((company) => {
@@ -177,7 +171,7 @@ fetchData(RESTAURANTS_ENDPOINT)
       });
     });
 
-    // Add event listener for search input
+    // search input
     const searchInput = document.querySelector(
       '.sidebar_search input[type="text"]'
     );
@@ -216,7 +210,6 @@ navigator.geolocation.getCurrentPosition(function (pos) {
   const lat = pos.coords.latitude;
   const long = pos.coords.longitude;
 
-  // Update user location for sorting
   userLocation = { lat: lat, lng: long };
 
   console.log(lat);
@@ -235,10 +228,22 @@ navigator.geolocation.getCurrentPosition(function (pos) {
     .addTo(map)
     .bindPopup("Your location")
     .openPopup();
-  map.setView([lat, long], 13);
-  map.panBy([pan_map, 0]);
 
-  // Re-render restaurants with updated user location for sorting
+  // Center the map on user's location, accounting for sidebar on desktop
+  if (window.innerWidth > 600) {
+    // On desktop, offset the center point to account for sidebar
+    const offsetLng =
+      long +
+      (pan_map / map.getSize().x) *
+        (map.getBounds().getEast() - map.getBounds().getWest());
+    map.setView([lat, offsetLng], 13);
+  } else {
+    map.setView([lat, long], 13);
+    setTimeout(() => {
+      map.panBy([0, 80]);
+    }, 100);
+  }
+
   renderRestaurants();
 });
 
@@ -303,7 +308,7 @@ function isRestaurantFavorited(restaurantId) {
   return favorites.includes(restaurantId);
 }
 
-// Initialize empty users array if it doesn't exist
+// Initialize empty users array in localstorage if it doesn't exist
 if (!localStorage.getItem("users")) {
   localStorage.setItem("users", JSON.stringify([]));
 }
@@ -365,14 +370,12 @@ uploadProfileBtn.addEventListener("click", () => {
 
 // Delete profile picture functionality
 deleteProfileBtn.addEventListener("click", () => {
-  // Remove from currentUser
   let user = JSON.parse(localStorage.getItem("currentUser"));
   if (user && user.profilePicture) {
     delete user.profilePicture;
     localStorage.setItem("currentUser", JSON.stringify(user));
   }
 
-  // Remove from users array
   if (user) {
     const users = JSON.parse(localStorage.getItem("users")) || [];
     const userIndex = users.findIndex((u) => u.username === user.username);
@@ -382,12 +385,10 @@ deleteProfileBtn.addEventListener("click", () => {
     }
   }
 
-  // Clear profile picture from modal
   if (profilePictureDiv) {
     profilePictureDiv.style.backgroundImage = "";
   }
 
-  // Update sidebar profile button to show default icon
   updateSidebarProfilePicture();
 });
 
@@ -396,10 +397,9 @@ fileInput.addEventListener("change", (event) => {
   if (!file) return;
 
   // Check file size (5MB limit)
-  const maxSizeInBytes = 5 * 1024 * 1024; // 5MB
+  const maxSizeInBytes = 5 * 1024 * 1024;
   if (file.size > maxSizeInBytes) {
     alert("Kuva on liian suuri. Maksimikoko on 5MB. Valitse pienempi kuva.");
-    // Clear the file input
     fileInput.value = "";
     return;
   }
@@ -407,13 +407,11 @@ fileInput.addEventListener("change", (event) => {
   const reader = new FileReader();
   reader.onload = function (e) {
     const base64Image = e.target.result;
-    // Save image to currentUser in localStorage
     let user = JSON.parse(localStorage.getItem("currentUser"));
     if (user) {
       user.profilePicture = base64Image;
       localStorage.setItem("currentUser", JSON.stringify(user));
 
-      // Update in users array
       const users = JSON.parse(localStorage.getItem("users")) || [];
       const userIndex = users.findIndex((u) => u.username === user.username);
       if (userIndex !== -1) {
@@ -421,13 +419,11 @@ fileInput.addEventListener("change", (event) => {
         localStorage.setItem("users", JSON.stringify(users));
       }
 
-      // Show image in profile modal
       if (profilePictureDiv) {
         profilePictureDiv.style.backgroundImage = `url('${base64Image}')`;
         profilePictureDiv.style.backgroundSize = "cover";
         profilePictureDiv.style.backgroundPosition = "center";
       }
-      // Update sidebar profile button
       updateSidebarProfilePicture();
     }
   };
@@ -445,13 +441,11 @@ function updateSidebarProfilePicture() {
   profileButtons.forEach((button) => {
     const profileButtonImg = button.querySelector("img");
     if (user && user.profilePicture && profileButtonImg) {
-      // Hide the default profile icon and set background image
       profileButtonImg.style.display = "none";
       button.style.backgroundImage = `url('${user.profilePicture}')`;
       button.style.backgroundSize = "cover";
       button.style.backgroundPosition = "center";
     } else if (profileButtonImg) {
-      // Show default profile icon
       profileButtonImg.style.display = "inline";
       button.style.backgroundImage = "";
     }
@@ -462,7 +456,6 @@ function updateSidebarProfilePicture() {
 profileButtons.forEach((button) => {
   button.addEventListener("click", () => {
     if (isUserLoggedIn()) {
-      // Fill profile modal inputs with user info
       const user = JSON.parse(localStorage.getItem("currentUser"));
       if (user) {
         const usernameInput = profileModal.querySelector(
@@ -478,14 +471,12 @@ profileButtons.forEach((button) => {
         if (firstNameInput) firstNameInput.value = user.firstName || "";
         if (lastNameInput) lastNameInput.value = user.lastName || "";
 
-        // Always clear and set profile picture based on current user data
         if (profilePictureDiv) {
           if (user.profilePicture) {
             profilePictureDiv.style.backgroundImage = `url('${user.profilePicture}')`;
             profilePictureDiv.style.backgroundSize = "cover";
             profilePictureDiv.style.backgroundPosition = "center";
           } else {
-            // Clear any existing background image if user has no profile picture
             profilePictureDiv.style.backgroundImage = "";
             profilePictureDiv.style.backgroundSize = "";
             profilePictureDiv.style.backgroundPosition = "";
@@ -544,7 +535,6 @@ if (registerForm) {
       const password = passwordInput.value;
       const confirmPassword = confirmPasswordInput.value;
 
-      // Basic validation
       if (!username || !password) {
         alert("Käyttäjänimi ja salasana ovat pakollisia");
         return;
@@ -560,13 +550,11 @@ if (registerForm) {
         return;
       }
 
-      // Check if username already exists (check against all users)
       if (isUsernameAlreadyTaken(username)) {
         alert("Käyttäjänimi on jo käytössä");
         return;
       }
 
-      // Create new user object
       const newUser = {
         firstName: firstName || "",
         lastName: lastName || "",
@@ -582,17 +570,14 @@ if (registerForm) {
       // Automatically sign in the new user
       localStorage.setItem("currentUser", JSON.stringify(newUser));
 
-      // Clear form fields
       firstNameInput.value = "";
       lastNameInput.value = "";
       usernameInput.value = "";
       passwordInput.value = "";
       confirmPasswordInput.value = "";
 
-      // Update UI
       updateSidebarProfilePicture();
 
-      // Close register modal and populate profile modal with user data from localStorage
       registerModal.close();
 
       // Fill profile modal inputs with the current user info from localStorage
@@ -611,7 +596,6 @@ if (registerForm) {
         if (firstNameInput) firstNameInput.value = currentUser.firstName || "";
         if (lastNameInput) lastNameInput.value = currentUser.lastName || "";
 
-        // Show profile picture if exists (from localStorage)
         if (profilePictureDiv) {
           if (currentUser.profilePicture) {
             profilePictureDiv.style.backgroundImage = `url('${currentUser.profilePicture}')`;
@@ -645,10 +629,8 @@ signOutButton.addEventListener("click", () => {
     starButton.style.backgroundColor = "";
   });
 
-  // Reset sidebar profile picture to default
   updateSidebarProfilePicture();
 
-  // Re-render restaurants to show all restaurants
   renderRestaurants();
   updateMapMarkers();
 
@@ -666,7 +648,6 @@ saveChangesButton.addEventListener("click", (e) => {
     return;
   }
 
-  // Get current form values
   const usernameInput = profileModal.querySelector('input[name="username"]');
   const firstNameInput = profileModal.querySelector('input[name="first-name"]');
   const lastNameInput = profileModal.querySelector('input[name="last-name"]');
@@ -687,13 +668,11 @@ saveChangesButton.addEventListener("click", (e) => {
   const newPassword = newPasswordInput.value;
   const newPasswordAgain = newPasswordAgainInput.value;
 
-  // Basic validation
   if (!newUsername) {
     alert("Käyttäjänimi on pakollinen");
     return;
   }
 
-  // Check if username is changing and if new username already exists
   if (newUsername !== currentUser.username) {
     if (isUsernameAlreadyTaken(newUsername, currentUser.username)) {
       alert("Käyttäjänimi on jo käytössä");
@@ -701,7 +680,6 @@ saveChangesButton.addEventListener("click", (e) => {
     }
   }
 
-  // Password validation if any password field is filled
   if (oldPassword || newPassword || newPasswordAgain) {
     if (!oldPassword) {
       alert("Vanha salasana on pakollinen salasanan vaihtamiseksi");
@@ -729,7 +707,6 @@ saveChangesButton.addEventListener("click", (e) => {
     }
   }
 
-  // Update user object
   const updatedUser = {
     ...currentUser,
     username: newUsername,
@@ -737,7 +714,6 @@ saveChangesButton.addEventListener("click", (e) => {
     lastName: newLastName,
   };
 
-  // Update password if provided
   if (newPassword) {
     updatedUser.password = newPassword;
   }
@@ -750,15 +726,12 @@ saveChangesButton.addEventListener("click", (e) => {
     localStorage.setItem("users", JSON.stringify(users));
   }
 
-  // Update currentUser
   localStorage.setItem("currentUser", JSON.stringify(updatedUser));
 
-  // Clear password fields
   oldPasswordInput.value = "";
   newPasswordInput.value = "";
   newPasswordAgainInput.value = "";
 
-  // Update sidebar profile picture in case username changed
   updateSidebarProfilePicture();
 
   alert("Tiedot päivitetty onnistuneesti!");
@@ -805,14 +778,12 @@ if (loginForm) {
               firstNameInput.value = currentUser.firstName || "";
             if (lastNameInput) lastNameInput.value = currentUser.lastName || "";
 
-            // Always clear and set profile picture based on current user data
             if (profilePictureDiv) {
               if (currentUser.profilePicture) {
                 profilePictureDiv.style.backgroundImage = `url('${currentUser.profilePicture}')`;
                 profilePictureDiv.style.backgroundSize = "cover";
                 profilePictureDiv.style.backgroundPosition = "center";
               } else {
-                // Clear any existing background image if user has no profile picture
                 profilePictureDiv.style.backgroundImage = "";
                 profilePictureDiv.style.backgroundSize = "";
                 profilePictureDiv.style.backgroundPosition = "";
@@ -822,7 +793,6 @@ if (loginForm) {
 
           profileModal.showModal();
         } else {
-          // Show error
           alert("Väärä käyttäjänimi tai salasana");
         }
       } else {
@@ -970,13 +940,13 @@ function sortRestaurants(restaurants) {
 
   return [...restaurants].sort((a, b) => {
     switch (sortBy) {
-      case "location_asc": // Location ascending (closest first)
+      case "location_asc":
         return calculateDistance(a) - calculateDistance(b);
-      case "location_desc": // Location descending (farthest first)
+      case "location_desc":
         return calculateDistance(b) - calculateDistance(a);
-      case "name_asc": // Name A-Z
+      case "name_asc":
         return a.name.localeCompare(b.name);
-      case "name_desc": // Name Z-A
+      case "name_desc":
         return b.name.localeCompare(a.name);
       default:
         return 0;
@@ -996,8 +966,7 @@ function getDistance(lat1, lon1, lat2, lon2) {
 
 // Filter restaurants and update both sidebar and map
 function filterRestaurants() {
-  selectedRestaurant = null; // Clear marker selection when filtering
-  // Don't reset showFavoritesOnly - keep the current view (starred or all)
+  selectedRestaurant = null;
 
   renderRestaurants();
   updateMapMarkers();
@@ -1005,15 +974,13 @@ function filterRestaurants() {
 
 // Update map markers visibility based on filters and selection
 function updateMapMarkers() {
-  isUpdatingMarkers = true; // Prevent infinite loop
+  isUpdatingMarkers = true;
 
   let restaurantsToShow;
 
   if (selectedRestaurant) {
-    // If a restaurant is selected, show only that one
     restaurantsToShow = [selectedRestaurant];
   } else {
-    // Otherwise show filtered restaurants
     restaurantsToShow = getFilteredRestaurants();
   }
 
@@ -1029,7 +996,6 @@ function updateMapMarkers() {
       ) {
         marker.openPopup();
       } else {
-        // Close popup for non-selected restaurants
         marker.closePopup();
       }
     } else {
@@ -1048,14 +1014,12 @@ function renderRestaurants() {
     ? [selectedRestaurant]
     : getFilteredRestaurants();
 
-  // Show "no results" message if no restaurants match filters
   if (restaurantsToShow.length === 0) {
     container.innerHTML =
       '<p style="text-align: center; color: #7c7c7c; margin-top: 20px;">Ei tuloksia</p>';
     return;
   }
 
-  // Add "Show all" button if a specific restaurant is selected
   if (selectedRestaurant) {
     const showAllDiv = document.createElement("div");
     showAllDiv.className = "show-all-button";
@@ -1091,12 +1055,10 @@ function renderRestaurants() {
     // Check if this is the closest restaurant
     const isClosest = closestRestaurant && r._id === closestRestaurant._id;
 
-    // Add blue border and closest restaurant indicator for the closest restaurant
     if (isClosest) {
       div.style.border = "2px solid #007acc";
     }
 
-    // Add visual indicator that restaurant cards are clickable
     div.style.cursor = "pointer";
     const providerName = r.company || r.provider || "";
     const isFavorited = isRestaurantFavorited(r._id);
@@ -1148,9 +1110,8 @@ function renderRestaurants() {
         </div>
       </div>
     `;
-    // Make restaurant card clickable (but not the menu dropdown or menu buttons)
+    // Make restaurant card clickable, exclude menu dropdown or menu buttons
     div.addEventListener("click", (event) => {
-      // Don't trigger selection if clicking on menu dropdown or menu content
       if (
         !event.target.closest(".menu_dropdown") &&
         !event.target.closest(".restaurant_menu_popup")
@@ -1195,12 +1156,11 @@ async function openMenu(restaurant) {
     if (name === restaurant.name) targetDiv = div;
   });
   if (!targetDiv) return;
-  // Remove selected class from all cards
+
   divs.forEach((div) => div.classList.remove("selected-restaurant"));
 
-  // Remove selected class from all cards
   divs.forEach((div) => div.classList.remove("selected-restaurant"));
-  // Add selected class to the active card
+
   targetDiv.classList.add("selected-restaurant");
 
   document.querySelectorAll(".restaurant_menu_popup").forEach((popup) => {
@@ -1210,11 +1170,10 @@ async function openMenu(restaurant) {
     const arrow = popup.parentElement.querySelector(".menu_dropdown_arrow");
     if (arrow) arrow.style.transform = "rotate(0deg)";
   });
-  // Check if menu popup already exists
+
   let menuContent = targetDiv.querySelector(".restaurant_menu_popup");
   const arrow = targetDiv.querySelector(".menu_dropdown_arrow");
 
-  // If menuContent exists, toggle visibility robustly
   if (menuContent) {
     if (menuContent._pending) {
       clearTimeout(menuContent._pending);
@@ -1238,7 +1197,6 @@ async function openMenu(restaurant) {
   menuContent._pending = true;
   arrow.style.transform = "rotate(180deg)";
 
-  // Insert immediately, but fill content after both menus are loaded
   targetDiv.appendChild(menuContent);
   handleOpenMenu(targetDiv);
 
@@ -1247,7 +1205,6 @@ async function openMenu(restaurant) {
     getDailyMenuHtml(restaurant._id),
     getWeeklyMenuHtml(restaurant._id),
   ]).then(([dailyHtml, weeklyHtml]) => {
-    // If menuContent was removed (user closed quickly), abort
     if (!targetDiv.contains(menuContent)) return;
     menuContent._pending = null;
     menuContent.innerHTML = `
@@ -1259,7 +1216,7 @@ async function openMenu(restaurant) {
         <div class="menu_content_area">${dailyHtml}</div>
       </div>
     `;
-    // Add event listeners to buttons
+
     const dayBtn = menuContent.querySelector(".menu_day_button");
     const weekBtn = menuContent.querySelector(".menu_week_button");
     const contentArea = menuContent.querySelector(".menu_content_area");
