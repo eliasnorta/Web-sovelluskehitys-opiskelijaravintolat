@@ -11,6 +11,7 @@ body {
 :root {
   --border-color: #c7c7c7;
   --sidebar-background-color: #f2f2f2;
+  /* --sidebar-background-color: #ffffff; */
   --text-color-grey: #7c7c7c;
   --border-radius: 7px;
   --color-warning: #e10000;
@@ -69,6 +70,9 @@ body {
   height: 50px;
   border-radius: 50%;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .sidebar_round_button img {
@@ -596,6 +600,7 @@ dialog button {
   gap: 10px;
   border: none;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .profile_picture_container button:hover {
