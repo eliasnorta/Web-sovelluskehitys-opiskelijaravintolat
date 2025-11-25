@@ -116,6 +116,13 @@ body {
   text-indent: 0;
 }
 
+/* Standard placeholder styling */
+.sidebar_search input::placeholder {
+  padding-left: 0;
+  text-indent: 0;
+  opacity: 0.7;
+}
+
 /* Firefox specific placeholder styling */
 .sidebar_search input::-moz-placeholder {
   padding-left: 0;
@@ -169,6 +176,7 @@ body {
 input[type="radio"] {
   appearance: none;
   -webkit-appearance: none;
+  -moz-appearance: none;
   width: 16px;
   height: 16px;
   border: 1px solid #ccc;
@@ -181,7 +189,7 @@ input[type="radio"] {
 
 /* Custom checked state */
 input[type="radio"]:checked {
-  border-color: #007bff;
+  border-color: #0056b3;
   background-color: #007bff;
 }
 
@@ -296,7 +304,13 @@ input[type="radio"]:focus {
   /* padding-right: 18px; */
 }
 
-/* Custom scrollbar that only appears when scrolling */
+/* Standard scrollbar styling (limited support) */
+.sidebar_restaurants_list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+}
+
+/* Custom webkit scrollbar that only appears when scrolling */
 .sidebar_restaurants_list::-webkit-scrollbar {
   width: 6px;
 }
