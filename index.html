@@ -1,308 +1,251 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Opiskelijaravintolat</title>
-    <link rel="stylesheet" href="./style.css" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-      crossorigin=""
-    />
-    <script
-      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-      crossorigin=""
-    ></script>
-    <script type="module" src="./index.js"></script>
-  </head>
+<html lang="fi">
 
-  <body>
-    <div class="content_wrapper">
-      <section id="mobile_navbar">
-        <div class="mobile_navbar_container">
-          <div class="sidebar_profile_container">
-            <button data-open-profile class="sidebar_round_button">
-              <img src="./public/profile.svg" alt="profile" />
-            </button>
-          </div>
-          <div class="sidebar_starred_container">
-            <button class="sidebar_round_button" data-show-starred>
-              <img src="./public/star-selected.svg" alt="starred" />
-            </button>
-          </div>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Opiskelijaravintolat</title>
+  <link rel="stylesheet" href="./style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script type="module" src="./index.js"></script>
+</head>
+
+<body>
+  <div class="content_wrapper">
+    <div id="mobile_navbar">
+      <div class="mobile_navbar_container">
+        <div class="sidebar_profile_container">
+          <button data-open-profile class="sidebar_round_button">
+            <img src="./public/profile.svg" alt="profile">
+          </button>
         </div>
-      </section>
-
-      <section id="sidebar">
-        <div class="sidebar_top">
-          <div class="sidebar_profile_container sidebar_profile_desktop">
-            <button data-open-profile class="sidebar_round_button">
-              <img src="./public/profile.svg" alt="profile" />
-            </button>
-          </div>
-          <div class="sidebar_starred_container sidebar_starred_desktop">
-            <button class="sidebar_round_button" data-show-starred>
-              <img src="./public/star-selected.svg" alt="starred" />
-            </button>
-          </div>
+        <div class="sidebar_starred_container">
+          <button class="sidebar_round_button" data-show-starred>
+            <img src="./public/star-selected.svg" alt="starred">
+          </button>
         </div>
-        <div class="sidebar_sort">
-          <div class="sidebar_search">
-            <input type="text" placeholder="Hae nimellä" />
-          </div>
-          <div class="sort_by_dropdown">
-            <button class="sort_button">
-              <img src="./public/sort-icon.svg" alt="sort-icon" />
-              <p>Sort by</p>
-            </button>
-            <!-- sort by dropdown menu -->
-            <div id="sort_by_dropdown" class="dropdown-content">
-              <div class="dropdown_wrapper">
-                <h2>Sort by</h2>
-                <fieldset>
-                  <legend><small>Sijainti</small></legend>
-                  <div class="dropdown_input_container">
-                    <input
-                      type="radio"
-                      id="location_asc"
-                      name="sort"
-                      value="location_asc"
-                      checked
-                    />
-                    <label for="location_asc"
-                      ><img
-                        src="./public/sort-location-ascending-icon.svg"
-                        alt="sort-location-ascending-icon"
-                      />
-                      Near ascending</label
-                    >
-                  </div>
-                  <div class="dropdown_input_container">
-                    <input
-                      type="radio"
-                      id="location_desc"
-                      name="sort"
-                      value="location_desc"
-                    />
-                    <label for="location_desc"
-                      ><img
-                        src="./public/sort-location-descending-icon.svg"
-                        alt="sort-location-descending-icon"
-                      />Near descending</label
-                    >
-                  </div>
-                </fieldset>
-                <hr />
-                <fieldset>
-                  <legend><small>Nimi</small></legend>
-                  <div class="dropdown_input_container">
-                    <input
-                      type="radio"
-                      id="name_asc"
-                      name="sort"
-                      value="name_asc"
-                    />
-                    <label for="name_asc"> A-Z</label>
-                  </div>
-                  <div class="dropdown_input_container">
-                    <input
-                      type="radio"
-                      id="name_desc"
-                      name="sort"
-                      value="name_desc"
-                    />
-                    <label for="name_desc">Z-A</label>
-                  </div>
-                </fieldset>
-              </div>
-            </div>
-          </div>
-
-          <div class="filter_dropdown">
-            <button class="filter_button">
-              <img src="./public/filter-icon.svg" alt="filter-icon" />
-              <p>Filter</p>
-            </button>
-            <!-- filter dropdown menu -->
-            <div
-              id="filter_dropdown"
-              class="dropdown-content filter-dropdown-content"
-            >
-              <div class="dropdown_wrapper">
-                <h2>Filter by</h2>
-                <div class="dropdown_select_area">
-                  <label for="city"><small>Kaupunki</small></label>
-                  <select id="city" name="filter"></select>
-                </div>
-                <div class="dropdown_select_area">
-                  <label for="serviceprovider"
-                    ><small>Palveluntarjoaja</small></label
-                  >
-                  <select id="serviceprovider" name="filter"></select>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="sidebar_restaurants_list"></div>
-        <div id="sidebar-resize-handle"></div>
-      </section>
-
-      <section class="map_section">
-        <div id="map"></div>
-      </section>
+      </div>
     </div>
 
-    <!-- profile dialog -->
-    <dialog id="profile_modal">
+    <section id="sidebar">
+      <div class="sidebar_top">
+        <div class="sidebar_profile_container sidebar_profile_desktop">
+          <button data-open-profile class="sidebar_round_button">
+            <img src="./public/profile.svg" alt="profile">
+          </button>
+        </div>
+        <div class="sidebar_starred_container sidebar_starred_desktop">
+          <button class="sidebar_round_button" data-show-starred>
+            <img src="./public/star-selected.svg" alt="starred">
+          </button>
+        </div>
+      </div>
+      <div class="sidebar_sort">
+        <div class="sidebar_search">
+          <input type="text" placeholder="Hae nimellä">
+        </div>
+        <div class="sort_by_dropdown">
+          <button class="sort_button">
+            <img src="./public/sort-icon.svg" alt="sort-icon">
+            Sort by
+          </button>
+          <!-- sort by dropdown menu -->
+          <div id="sort_by_dropdown" class="dropdown-content">
+            <div class="dropdown_wrapper">
+              <h2>Sort by</h2>
+              <fieldset>
+                <legend><small>Sijainti</small></legend>
+                <div class="dropdown_input_container">
+                  <input type="radio" id="location_asc" name="sort" value="location_asc" checked>
+                  <label for="location_asc"><img src="./public/sort-location-ascending-icon.svg"
+                      alt="sort-location-ascending-icon">
+                    Near ascending</label>
+                </div>
+                <div class="dropdown_input_container">
+                  <input type="radio" id="location_desc" name="sort" value="location_desc">
+                  <label for="location_desc"><img src="./public/sort-location-descending-icon.svg"
+                      alt="sort-location-descending-icon">Near descending</label>
+                </div>
+              </fieldset>
+              <hr>
+              <fieldset>
+                <legend><small>Nimi</small></legend>
+                <div class="dropdown_input_container">
+                  <input type="radio" id="name_asc" name="sort" value="name_asc">
+                  <label for="name_asc"> A-Z</label>
+                </div>
+                <div class="dropdown_input_container">
+                  <input type="radio" id="name_desc" name="sort" value="name_desc">
+                  <label for="name_desc">Z-A</label>
+                </div>
+              </fieldset>
+            </div>
+          </div>
+        </div>
+
+        <div class="filter_dropdown">
+          <button class="filter_button">
+            <img src="./public/filter-icon.svg" alt="filter-icon">
+            Filter
+          </button>
+          <!-- filter dropdown menu -->
+          <div id="filter_dropdown" class="dropdown-content filter-dropdown-content">
+            <div class="dropdown_wrapper">
+              <h2>Filter by</h2>
+              <div class="dropdown_select_area">
+                <label for="city"><small>Kaupunki</small></label>
+                <select id="city" name="filter"></select>
+              </div>
+              <div class="dropdown_select_area">
+                <label for="serviceprovider"><small>Palveluntarjoaja</small></label>
+                <select id="serviceprovider" name="filter"></select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="sidebar_restaurants_list"></div>
+      <div id="sidebar-resize-handle"></div>
+    </section>
+
+    <div class="map_section">
+      <div id="map"></div>
+    </div>
+  </div>
+
+  <!-- profile dialog -->
+  <dialog id="profile_modal">
+    <button data-close-modal>&times;</button>
+    <h1 class="profile_title">Profiili</h1>
+    <div class="profile_basic_info_row profile_section">
+      <div class="top_row_profile_picture">
+        <div class="profile_picture_container">
+          <div class="profile_picture_wrapper">
+            <div class="profile_picture"></div>
+          </div>
+          <div>
+            <button data-upload-profile>
+              <img src="./public/upload-icon.svg" alt="upload-icon">
+              Uusi kuva
+            </button>
+            <button data-delete-profile>Poista kuva</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile_basic_info">
+        <div class="">
+          <label for="username"><small>Username</small></label>
+          <input type="text" name="username" placeholder="Username" id="username">
+        </div>
+        <div>
+          <label for="first-name"><small>Etunimi</small></label>
+          <input type="text" name="first-name" placeholder="John" id="first-name">
+        </div>
+        <div>
+          <label for="last-name"><small>Sukunimi</small></label>
+          <input type="text" name="last-name" placeholder="Smith" id="last-name">
+        </div>
+      </div>
+    </div>
+
+    <div class="profile_change_password profile_section">
+      <h3 class="change_password_title">Vaihda salasana</h3>
+
+      <div class="change_passwords_inputs">
+        <div>
+          <label for="old-password"><small>Vanha salasana</small><span>*</span></label>
+          <input type="password" name="old-password" id="old-password">
+        </div>
+        <div>
+          <label for="new-password"><small>Uusi</small><span>*</span></label>
+          <input type="password" name="new-password" id="new-password">
+        </div>
+        <div>
+          <label for="new-password-again"><small>Uusi uudestaan</small><span>*</span></label>
+          <input type="password" name="new-password-again" id="new-password-again">
+        </div>
+      </div>
+
+      <!-- <input type="submit" value="Vaihda" /> -->
+    </div>
+    <div class="profile_bottom_buttons">
+      <div>
+        <button data-sign-out>Kirjaudu ulos</button>
+      </div>
+      <div>
+        <button data-save-changes>Tallenna tiedot</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- register modal -->
+  <dialog id="register_modal">
+    <div class="register_modal_wrapper">
       <button data-close-modal>&times;</button>
-      <h1 class="profile_title">Profiili</h1>
-      <div class="profile_basic_info_row profile_section">
-        <div class="top_row_profile_picture">
-          <div class="profile_picture_container">
-            <div class="profile_picture_wrapper">
-              <div class="profile_picture"></div>
-            </div>
-            <div>
-              <button data-upload-profile>
-                <img src="./public/upload-icon.svg" alt="upload-icon" />
-                Uusi kuva
-              </button>
-              <button data-delete-profile>Poista kuva</button>
-            </div>
-          </div>
-        </div>
+      <h1>Luo Käyttäjä</h1>
 
-        <div class="profile_basic_info">
-          <div class="">
-            <label for="username"><small>Username</small></label>
-            <input type="text" name="username" placeholder="Username" id="" />
-          </div>
-          <div>
-            <label for="first-name"><small>Etunimi</small></label>
-            <input type="text" name="first-name" placeholder="John" id="" />
-          </div>
-          <div>
-            <label for="last-name"><small>Sukunimi</small></label>
-            <input type="text" name="last-name" placeholder="Smith" id="" />
-          </div>
+      <div class="register_form_name_elements">
+        <div class="form_element">
+          <label for="register-first-name"><small>Etunimi</small></label>
+          <input type="text" name="first-name" placeholder="John" id="register-first-name">
+        </div>
+        <div class="form_element">
+          <label for="register-last-name"><small>Sukunimi</small></label>
+          <input type="text" name="last-name" placeholder="Smith" id="register-last-name">
         </div>
       </div>
 
-      <div class="profile_change_password profile_section">
-        <h3 class="change_password_title">Vaihda salasana</h3>
-
-        <div class="change_passwords_inputs">
-          <div>
-            <label for="old-password"
-              ><small>Vanha salasana</small><span>*</span></label
-            >
-            <input type="password" name="old-password" id="" />
-          </div>
-          <div>
-            <label for="new-password"><small>Uusi</small><span>*</span></label>
-            <input type="password" name="new-password" id="" />
-          </div>
-          <div>
-            <label for="new-password-again"
-              ><small>Uusi uudestaan</small><span>*</span></label
-            >
-            <input type="password" name="new-password-again" id="" />
-          </div>
-        </div>
-
-        <!-- <input type="submit" value="Vaihda" /> -->
-      </div>
-      <div class="profile_bottom_buttons">
+      <div class="register_form_username_password_elements">
         <div>
-          <button data-sign-out>Kirjaudu ulos</button>
+          <label for="create-username"><small>Käyttäjänimi</small><span>*</span></label>
+          <input type="text" name="create-username" id="create-username">
         </div>
         <div>
-          <button data-save-changes>Tallenna tiedot</button>
+          <label for="create-password"><small>Luo salasana</small><span>*</span></label>
+          <input type="password" name="create-password" id="create-password">
+        </div>
+        <div>
+          <label for="create-password-again"><small>Salasana uudestaan</small><span>*</span></label>
+          <input type="password" name="create-password-again" id="create-password-again">
         </div>
       </div>
-    </dialog>
+      <div class="modal_submit register_submit">
+        <input type="submit" value="Luo käyttäjä">
+      </div>
+    </div>
+  </dialog>
 
-    <!-- register modal -->
-    <dialog id="register_modal">
-      <div class="register_modal_wrapper">
-        <button data-close-modal>&times;</button>
-        <h1>Luo Käyttäjä</h1>
-
-        <div class="register_form_name_elements">
-          <div class="form_element">
-            <label for="first-name"><small>Etunimi</small></label>
-            <input type="text" name="first-name" placeholder="John" id="" />
-          </div>
-          <div class="form_element">
-            <label for="last-name"><small>Sukunimi</small></label>
-            <input type="text" name="last-name" placeholder="Smith" id="" />
-          </div>
+  <!-- Login modal -->
+  <dialog id="login_modal">
+    <div class="login_modal_wrapper">
+      <button data-close-modal>&times;</button>
+      <h1>Kirjaudu</h1>
+      <div class="login_inputs">
+        <div class="form_element">
+          <label for="login-username"><small>Käyttäjänimi</small></label>
+          <input type="text" name="first-name" placeholder="John" id="login-username">
         </div>
-
-        <div class="register_form_username_password_elements">
-          <div>
-            <label for="create-username"
-              ><small>Käyttäjänimi</small><span>*</span></label
-            >
-            <input type="text" name="create-username" id="" />
-          </div>
-          <div>
-            <label for="create-password"
-              ><small>Luo salasana</small><span>*</span></label
-            >
-            <input type="password" name="create-password" id="" />
-          </div>
-          <div>
-            <label for="create-password-again"
-              ><small>Salasana uudestaan</small><span>*</span></label
-            >
-            <input type="password" name="create-password-again" id="" />
-          </div>
+        <div class="form_element">
+          <label for="login-password"><small>Salasana</small></label>
+          <input type="password" name="login-password" placeholder="**************" id="login-password">
         </div>
-        <div class="modal_submit register_submit">
-          <input type="submit" value="Luo käyttäjä" />
+        <div class="modal_submit">
+          <input type="submit" value="Kirjaudu">
         </div>
       </div>
-    </dialog>
-
-    <!-- Login modal -->
-    <dialog id="login_modal">
-      <div class="login_modal_wrapper">
-        <button data-close-modal>&times;</button>
-        <h1>Kirjaudu</h1>
-        <div class="login_inputs">
-          <div class="form_element">
-            <label for="first-name"><small>Käyttäjänimi</small></label>
-            <input type="text" name="first-name" placeholder="John" id="" />
-          </div>
-          <div class="form_element">
-            <label for="login-password"><small>Salasana</small></label>
-            <input
-              type="password"
-              name="login-password"
-              placeholder="**************"
-              id=""
-            />
-          </div>
-          <div class="modal_submit">
-            <input type="submit" value="Kirjaudu" />
-          </div>
-        </div>
-        <div class="create_acc_footer">
-          <small>
-            Ei vielä tiliä?
-            <button id="open_register_modal">Luo käyttäjä</button>
-          </small>
-        </div>
+      <div class="create_acc_footer">
+        <small>
+          Ei vielä tiliä?
+          <button id="open_register_modal">Luo käyttäjä</button>
+        </small>
       </div>
-    </dialog>
-  </body>
+    </div>
+  </dialog>
+</body>
+
 </html>

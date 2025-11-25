@@ -134,6 +134,7 @@ body {
   cursor: pointer;
   transition: 0.5s ease;
   height: 100%;
+  white-space: nowrap;
 }
 
 .sidebar_sort .filter_button *,
